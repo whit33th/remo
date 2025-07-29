@@ -19,6 +19,7 @@
     "convex-helpers": "^0.1.100",
     "lucide-react": "^0.532.0",
     "next": "^15.4.4",
+    "openai": "^4.104.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "resend": "^4.7.0",
