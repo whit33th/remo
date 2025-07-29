@@ -23,6 +23,7 @@ crons.cron(
 
 export const checkOverduePosts = internalAction({
   args: {},
+  returns: v.null(),
   handler: async (ctx) => {
     const now = Date.now();
     const overduePosts = await ctx.runQuery(internal.crons.getOverduePosts, {
@@ -47,11 +48,13 @@ export const checkOverduePosts = internalAction({
         notificationId,
       });
     }
+    return null;
   },
 });
 
 export const sendDailyReminders = internalAction({
   args: {},
+  returns: v.null(),
   handler: async (ctx) => {
     const usersWithNotifications = await ctx.runQuery(
       internal.crons.getUsersWithNotificationsEnabled,
@@ -64,11 +67,40 @@ export const sendDailyReminders = internalAction({
         notificationTime: "09:00",
       });
     }
+    return null;
   },
 });
 
 export const getOverduePosts = internalQuery({
   args: { now: v.number() },
+  returns: v.array(
+    v.object({
+      _id: v.id("posts"),
+      _creationTime: v.number(),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      publishedAt: v.optional(v.number()),
+      hashtags: v.array(v.string()),
+      links: v.array(v.string()),
+      mentions: v.array(v.string()),
+      mediaIds: v.array(v.id("_storage")),
+      authorBio: v.optional(v.string()),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      enableNotifications: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      reminderHours: v.optional(v.number()),
+    }),
+  ),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("posts")
@@ -86,6 +118,19 @@ export const getOverduePosts = internalQuery({
 
 export const getUsersWithNotificationsEnabled = internalQuery({
   args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      name: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phone: v.optional(v.string()),
+      image: v.optional(v.string()),
+      emailVerificationTime: v.optional(v.number()),
+      phoneVerificationTime: v.optional(v.number()),
+      isAnonymous: v.optional(v.boolean()),
+    }),
+  ),
   handler: async (ctx) => {
     const posts = await ctx.db
       .query("posts")

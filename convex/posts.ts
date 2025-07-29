@@ -32,6 +32,7 @@ export const createPost = mutation({
     notificationTime: v.optional(v.string()),
     reminderHours: v.optional(v.number()),
   },
+  returns: v.id("posts"),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -95,6 +96,7 @@ export const updatePost = mutation({
     notificationTime: v.optional(v.string()),
     reminderHours: v.optional(v.number()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -139,6 +141,7 @@ export const updatePost = mutation({
         );
       }
     }
+    return null;
   },
 });
 
@@ -146,6 +149,7 @@ export const deletePost = mutation({
   args: {
     id: v.id("posts"),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -193,6 +197,36 @@ export const getUserPosts = query({
     ),
     status: v.optional(v.union(v.literal("idea"), v.literal("schedule"))),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("posts"),
+      _creationTime: v.number(),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      publishedAt: v.optional(v.number()),
+      hashtags: v.array(v.string()),
+      links: v.array(v.string()),
+      mentions: v.array(v.string()),
+      mediaIds: v.array(v.id("_storage")),
+      authorBio: v.optional(v.string()),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      enableNotifications: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      reminderHours: v.optional(v.number()),
+      mediaUrls: v.array(v.union(v.string(), v.null())),
+      mediaTypes: v.array(v.string()),
+    }),
+  ),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -246,6 +280,36 @@ export const getUserPosts = query({
 
 export const getScheduledPosts = query({
   args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("posts"),
+      _creationTime: v.number(),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      publishedAt: v.optional(v.number()),
+      hashtags: v.array(v.string()),
+      links: v.array(v.string()),
+      mentions: v.array(v.string()),
+      mediaIds: v.array(v.id("_storage")),
+      authorBio: v.optional(v.string()),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      enableNotifications: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      reminderHours: v.optional(v.number()),
+      mediaUrls: v.array(v.union(v.string(), v.null())),
+      mediaTypes: v.array(v.string()),
+    }),
+  ),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -283,6 +347,8 @@ export const getScheduledPosts = query({
 });
 
 export const generateUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -303,6 +369,7 @@ export const publishPost = action({
     ),
     publishNow: v.boolean(),
   },
+  returns: v.object({ success: v.boolean(), message: v.string() }),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -337,6 +404,15 @@ export const getPlatformSpecificFields = query({
       v.literal("telegram"),
     ),
   },
+  returns: v.object({
+    required: v.array(v.string()),
+    optional: v.array(v.string()),
+    maxContentLength: v.number(),
+    maxHashtags: v.number(),
+    mediaTypes: v.array(v.string()),
+    maxMediaCount: v.number(),
+    maxTitleLength: v.optional(v.number()),
+  }),
   handler: async (ctx, args) => {
     const fields = {
       instagram: {
@@ -387,6 +463,35 @@ export const getPlatformSpecificFields = query({
 
 export const getPostById = query({
   args: { id: v.id("posts") },
+  returns: v.union(
+    v.object({
+      _id: v.id("posts"),
+      _creationTime: v.number(),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      publishedAt: v.optional(v.number()),
+      hashtags: v.array(v.string()),
+      links: v.array(v.string()),
+      mentions: v.array(v.string()),
+      mediaIds: v.array(v.id("_storage")),
+      authorBio: v.optional(v.string()),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      enableNotifications: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      reminderHours: v.optional(v.number()),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
@@ -398,12 +503,14 @@ export const updatePostStatus = mutation({
     status: v.union(v.literal("idea"), v.literal("schedule")),
     publishedAt: v.optional(v.number()),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { postId, ...updates } = args;
     await ctx.db.patch(postId, {
       ...updates,
       updatedAt: Date.now(),
     });
+    return null;
   },
 });
 
@@ -419,6 +526,7 @@ export const sharePost = action({
       mediaUrls: v.optional(v.array(v.string())),
     }),
   },
+  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     // Validate email
     if (!args.email || !args.email.includes("@")) {

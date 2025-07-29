@@ -24,6 +24,7 @@ export const createNotification = mutation({
     message: v.string(),
     scheduledFor: v.number(),
   },
+  returns: v.id("notifications"),
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -40,6 +41,24 @@ export const createNotification = mutation({
 
 export const getUserNotifications = query({
   args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("notifications"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      postId: v.id("posts"),
+      type: v.union(
+        v.literal("deadline"),
+        v.literal("reminder"),
+        v.literal("overdue"),
+        v.literal("published"),
+        v.literal("daily"),
+      ),
+      message: v.string(),
+      sent: v.boolean(),
+      scheduledFor: v.number(),
+    }),
+  ),
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
@@ -61,13 +80,14 @@ export const schedulePostNotifications = internalAction({
     reminderHours: v.number(),
     notificationTime: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const post = await ctx.runQuery(internal.notifications.getPostById, {
       id: args.postId,
     });
 
     if (!post) {
-      return;
+      return null;
     }
 
     const user = await ctx.runQuery(internal.notifications.getUserById, {
@@ -75,7 +95,7 @@ export const schedulePostNotifications = internalAction({
     });
 
     if (!user?.email) {
-      return;
+      return null;
     }
 
     // Clear existing notifications for this post
@@ -140,6 +160,8 @@ export const schedulePostNotifications = internalAction({
         notificationTime: args.notificationTime,
       },
     );
+
+    return null;
   },
 });
 
@@ -148,13 +170,14 @@ export const scheduleDailyReminders = internalAction({
     userId: v.id("users"),
     notificationTime: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await ctx.runQuery(internal.notifications.getUserById, {
       id: args.userId,
     });
 
     if (!user?.email) {
-      return;
+      return null;
     }
 
     // Get user's posts that need daily reminders
@@ -166,7 +189,7 @@ export const scheduleDailyReminders = internalAction({
     );
 
     if (posts.length === 0) {
-      return;
+      return null;
     }
 
     // Calculate next reminder time
@@ -199,6 +222,8 @@ export const scheduleDailyReminders = internalAction({
         userId: args.userId,
       },
     );
+
+    return null;
   },
 });
 
@@ -207,13 +232,14 @@ export const sendDailyReminder = internalAction({
     notificationId: v.id("notifications"),
     userId: v.id("users"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await ctx.runQuery(internal.notifications.getUserById, {
       id: args.userId,
     });
 
     if (!user?.email) {
-      return;
+      return null;
     }
 
     const posts = await ctx.runQuery(
@@ -245,6 +271,8 @@ export const sendDailyReminder = internalAction({
     } catch (error) {
       console.error("Failed to send daily reminder:", error);
     }
+
+    return null;
   },
 });
 
@@ -252,6 +280,7 @@ export const sendNotificationEmail = internalAction({
   args: {
     notificationId: v.id("notifications"),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const notification = await ctx.runQuery(
       internal.notifications.getNotificationById,
@@ -261,7 +290,7 @@ export const sendNotificationEmail = internalAction({
     );
 
     if (!notification || notification.sent) {
-      return;
+      return null;
     }
 
     const user = await ctx.runQuery(internal.notifications.getUserById, {
@@ -269,7 +298,7 @@ export const sendNotificationEmail = internalAction({
     });
 
     if (!user?.email) {
-      return;
+      return null;
     }
 
     const post = await ctx.runQuery(internal.notifications.getPostById, {
@@ -292,11 +321,32 @@ export const sendNotificationEmail = internalAction({
     } catch (error) {
       console.error("Failed to send notification email:", error);
     }
+
+    return null;
   },
 });
 
 export const getNotificationById = internalQuery({
   args: { id: v.id("notifications") },
+  returns: v.union(
+    v.object({
+      _id: v.id("notifications"),
+      _creationTime: v.number(),
+      userId: v.id("users"),
+      postId: v.id("posts"),
+      type: v.union(
+        v.literal("deadline"),
+        v.literal("reminder"),
+        v.literal("overdue"),
+        v.literal("published"),
+        v.literal("daily"),
+      ),
+      message: v.string(),
+      sent: v.boolean(),
+      scheduledFor: v.number(),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
@@ -304,6 +354,35 @@ export const getNotificationById = internalQuery({
 
 export const getPostById = internalQuery({
   args: { id: v.id("posts") },
+  returns: v.union(
+    v.object({
+      _id: v.id("posts"),
+      _creationTime: v.number(),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      publishedAt: v.optional(v.number()),
+      hashtags: v.array(v.string()),
+      links: v.array(v.string()),
+      mentions: v.array(v.string()),
+      mediaIds: v.array(v.id("_storage")),
+      authorBio: v.optional(v.string()),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      enableNotifications: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      reminderHours: v.optional(v.number()),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
@@ -311,6 +390,20 @@ export const getPostById = internalQuery({
 
 export const getUserById = internalQuery({
   args: { id: v.id("users") },
+  returns: v.union(
+    v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      name: v.optional(v.string()),
+      email: v.optional(v.string()),
+      phone: v.optional(v.string()),
+      image: v.optional(v.string()),
+      emailVerificationTime: v.optional(v.number()),
+      phoneVerificationTime: v.optional(v.number()),
+      isAnonymous: v.optional(v.boolean()),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id);
   },
@@ -318,6 +411,34 @@ export const getUserById = internalQuery({
 
 export const getUserPostsForReminders = internalQuery({
   args: { userId: v.id("users") },
+  returns: v.array(
+    v.object({
+      _id: v.id("posts"),
+      _creationTime: v.number(),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      publishedAt: v.optional(v.number()),
+      hashtags: v.array(v.string()),
+      links: v.array(v.string()),
+      mentions: v.array(v.string()),
+      mediaIds: v.array(v.id("_storage")),
+      authorBio: v.optional(v.string()),
+      userId: v.id("users"),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+      enableNotifications: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      reminderHours: v.optional(v.number()),
+    }),
+  ),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("posts")
@@ -349,6 +470,7 @@ export const createInternalNotification = internalMutation({
     message: v.string(),
     scheduledFor: v.number(),
   },
+  returns: v.id("notifications"),
   handler: async (ctx, args) => {
     return await ctx.db.insert("notifications", {
       ...args,
@@ -359,6 +481,7 @@ export const createInternalNotification = internalMutation({
 
 export const clearPostNotifications = internalMutation({
   args: { postId: v.id("posts") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const notifications = await ctx.db
       .query("notifications")
@@ -369,13 +492,16 @@ export const clearPostNotifications = internalMutation({
     for (const notification of notifications) {
       await ctx.db.delete(notification._id);
     }
+    return null;
   },
 });
 
 export const markNotificationSent = internalMutation({
   args: { id: v.id("notifications") },
+  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { sent: true });
+    return null;
   },
 });
 
