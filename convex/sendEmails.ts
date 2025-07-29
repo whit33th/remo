@@ -54,7 +54,7 @@ export const sendNotificationEmail = internalAction({
 
     try {
       await resend.sendEmail(ctx, {
-        from: "Content Creator Assistant <notifications@contentcreator.app>",
+        from: "Content Creator Assistant <notifications@notification.whit33th.com>",
         to: user.email,
         subject: getEmailSubject(notification.type),
         html: getEmailContent(notification, post),
@@ -66,7 +66,6 @@ export const sendNotificationEmail = internalAction({
     } catch (error) {
       // Failed to send notification email
     }
-
     return null;
   },
 });
@@ -100,7 +99,7 @@ export const sendDailyReminder = internalAction({
 
     try {
       await resend.sendEmail(ctx, {
-        from: "Content Creator Assistant <notifications@contentcreator.app>",
+        from: "Content Creator Assistant <notifications@notification.whit33th.com>",
         to: user.email,
         subject: "📋 Ежедневный отчет по контенту",
         html: getDailyReminderContent(posts),
@@ -136,7 +135,7 @@ export const sendShareEmail = internalAction({
 
     try {
       await resend.sendEmail(ctx, {
-        from: "Content Creator Assistant <academic-mammoth-217@convexchef.app>",
+        from: "Content Creator Assistant <notifications@notification.whit33th.com>",
         to: args.email,
         subject: `Shared Post: ${args.postData.title || "Content"}`,
         html,
