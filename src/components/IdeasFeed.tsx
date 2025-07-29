@@ -46,7 +46,6 @@ export function IdeasFeed({
             <span className="text-xs text-neutral-200">Запланировано</span>
           </div>
         );
-      // Handle old statuses
       case "draft":
       case "scheduled":
       case "published":
@@ -66,7 +65,6 @@ export function IdeasFeed({
     }
   };
 
-  // Sort posts by scheduled date (closest first), then by creation date
   const sortedPosts = [...posts].sort((a, b) => {
     if (a.scheduledDate && b.scheduledDate) {
       return a.scheduledDate - b.scheduledDate;

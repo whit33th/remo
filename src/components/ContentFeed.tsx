@@ -34,13 +34,10 @@ export function ContentFeed({
     return <Analytics />;
   }
 
-  // Sort posts by creation date (newest first) and scheduled date
   const sortedPosts = [...posts].sort((a, b) => {
-    // Scheduled posts first
     if (a.scheduledDate && !b.scheduledDate) return -1;
     if (!a.scheduledDate && b.scheduledDate) return 1;
 
-    // Then by scheduled date or creation date
     if (a.scheduledDate && b.scheduledDate) {
       return a.scheduledDate - b.scheduledDate;
     }
@@ -48,7 +45,6 @@ export function ContentFeed({
     return b._creationTime - a._creationTime;
   });
 
-  // Platform-specific rendering
   const renderPlatformSpecificFeed = () => {
     switch (platform) {
       case "instagram":
@@ -107,7 +103,7 @@ export function ContentFeed({
   return (
     <section className="w-full">
       {/* Posts Feed */}
-      <div className="space-y-0">
+      <div className="space-y-0 overflow-hidden">
         {sortedPosts.length === 0 ? (
           <div className="py-16 text-center">
             <div className="mb-4 text-6xl">

@@ -61,19 +61,31 @@ export function ShareModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-md rounded-lg border border-neutral-900 bg-black p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        className="w-full max-w-md rounded-lg border border-neutral-900 bg-black p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-neutral-100">Share post</h3>
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
             className="text-gray-400 transition-colors hover:text-gray-600"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="mb-4 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
+        <div
+          className="mb-4 rounded-lg border border-neutral-800 bg-neutral-950 p-3"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="mb-2 flex items-center space-x-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-xs font-bold text-white">
               C
@@ -89,7 +101,11 @@ export function ShareModal({
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div>
             <label
               htmlFor="email"
@@ -102,6 +118,7 @@ export function ShareModal({
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               placeholder="example@email.com"
               className="w-full rounded-lg border border-neutral-800 bg-black p-3 text-neutral-100 placeholder-neutral-500 focus:border-neutral-600 focus:outline-none"
               required
@@ -111,7 +128,10 @@ export function ShareModal({
           <div className="flex space-x-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
               className="flex-1 rounded-lg border border-neutral-800 bg-transparent px-4 py-2 text-neutral-300 transition-colors hover:bg-neutral-900"
             >
               Cancel
@@ -119,6 +139,7 @@ export function ShareModal({
             <button
               type="submit"
               disabled={isLoading || !email.trim()}
+              onClick={(e) => e.stopPropagation()}
               className="flex-1 rounded-lg bg-neutral-100 px-4 py-2 font-medium text-black transition-colors hover:bg-neutral-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Sending..." : "Send"}

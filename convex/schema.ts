@@ -3,6 +3,12 @@ import { v } from "convex/values";
 import { authTables } from "@convex-dev/auth/server";
 
 const applicationTables = {
+  users: defineTable({
+    email: v.string(),
+    name: v.optional(v.string()),
+    notificationTime: v.optional(v.string()),
+    notificationsEnabled: v.optional(v.boolean()),
+  }).index("by_email", ["email"]),
   posts: defineTable({
     title: v.string(),
     content: v.string(),

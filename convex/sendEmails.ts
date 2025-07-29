@@ -6,23 +6,20 @@ import {
   internalQuery,
 } from "./_generated/server";
 import { v } from "convex/values";
+import { getPlatformName } from "./shared";
+import { Doc } from "./_generated/dataModel";
 
 export const resend: Resend = new Resend(components.resend, {
   testMode: false,
 });
 
-// Обработчик событий email
 export const handleEmailEvent = resend.defineOnEmailEvent(async (ctx, args) => {
   if (args.event.type === "email.delivered") {
-    // Email delivered successfully
   } else if (args.event.type === "email.bounced") {
-    // Email bounced
   } else if (args.event.type === "email.complained") {
-    // Email complained
   }
 });
 
-// Функция для отправки уведомлений о постах
 export const sendNotificationEmail = internalAction({
   args: {
     notificationId: v.id("notifications"),
@@ -40,7 +37,7 @@ export const sendNotificationEmail = internalAction({
       return null;
     }
 
-    const user = await ctx.runQuery(internal.sendEmails.getUserById, {
+    const user = await ctx.runQuery(internal.shared.getUserById, {
       id: notification.userId,
     });
 
@@ -48,29 +45,33 @@ export const sendNotificationEmail = internalAction({
       return null;
     }
 
-    const post = await ctx.runQuery(internal.sendEmails.getPostById, {
+    const post = await ctx.runQuery(internal.posts.getPostById, {
       id: notification.postId,
     });
 
+    let mediaUrls: string[] = [];
+    if (post && post.mediaIds.length > 0) {
+      mediaUrls = await ctx.runQuery(internal.posts.getMediaUrls, {
+        mediaIds: post.mediaIds,
+      });
+    }
+
     try {
       await resend.sendEmail(ctx, {
-        from: "Content Creator Assistant <notifications@notification.whit33th.com>",
+        from: "Content Creator Assistant <notifications@resend.dev>",
         to: user.email,
         subject: getEmailSubject(notification.type),
-        html: getEmailContent(notification, post),
+        html: getEmailContent(notification, post, mediaUrls),
       });
 
       await ctx.runMutation(internal.sendEmails.markNotificationSent, {
         id: args.notificationId,
       });
-    } catch (error) {
-      // Failed to send notification email
-    }
+    } catch (error) {}
     return null;
   },
 });
 
-// Функция для отправки ежедневных напоминаний
 export const sendDailyReminder = internalAction({
   args: {
     notificationId: v.id("notifications"),
@@ -78,7 +79,7 @@ export const sendDailyReminder = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const user = await ctx.runQuery(internal.sendEmails.getUserById, {
+    const user = await ctx.runQuery(internal.shared.getUserById, {
       id: args.userId,
     });
 
@@ -86,12 +87,9 @@ export const sendDailyReminder = internalAction({
       return null;
     }
 
-    const posts = await ctx.runQuery(
-      internal.sendEmails.getUserPostsForReminders,
-      {
-        userId: args.userId,
-      },
-    );
+    const posts = await ctx.runQuery(internal.shared.getUserPostsForReminders, {
+      userId: args.userId,
+    });
 
     if (posts.length === 0) {
       return null;
@@ -99,7 +97,7 @@ export const sendDailyReminder = internalAction({
 
     try {
       await resend.sendEmail(ctx, {
-        from: "Content Creator Assistant <notifications@notification.whit33th.com>",
+        from: "Content Creator Assistant <notifications@resend.dev>",
         to: user.email,
         subject: "📋 Ежедневный отчет по контенту",
         html: getDailyReminderContent(posts),
@@ -108,9 +106,7 @@ export const sendDailyReminder = internalAction({
       await ctx.runMutation(internal.sendEmails.markNotificationSent, {
         id: args.notificationId,
       });
-    } catch (error) {
-      // Failed to send daily reminder
-    }
+    } catch (error) {}
 
     return null;
   },
@@ -119,25 +115,33 @@ export const sendDailyReminder = internalAction({
 export const sendShareEmail = internalAction({
   args: {
     email: v.string(),
-    postData: v.object({
-      title: v.optional(v.string()),
-      content: v.optional(v.string()),
-      platform: v.string(),
-      status: v.string(),
-      hashtags: v.optional(v.array(v.string())),
-      mediaUrls: v.optional(v.array(v.string())),
-    }),
+    postId: v.id("posts"),
     userEmail: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const html = createShareEmailContent(args.postData, args.userEmail);
+    const postData = await ctx.runQuery(internal.posts.getPostById, {
+      id: args.postId,
+    });
+
+    if (!postData) {
+      throw new Error("Post not found");
+    }
+
+    let mediaUrls: string[] = [];
+    if (postData.mediaIds && postData.mediaIds.length > 0) {
+      mediaUrls = await ctx.runQuery(internal.posts.getMediaUrls, {
+        mediaIds: postData.mediaIds,
+      });
+    }
+
+    const html = createShareEmailContent(postData, args.userEmail, mediaUrls);
 
     try {
       await resend.sendEmail(ctx, {
-        from: "Content Creator Assistant <notifications@notification.whit33th.com>",
+        from: "Content Creator Assistant <notifications@resend.dev>",
         to: args.email,
-        subject: `Shared Post: ${args.postData.title || "Content"}`,
+        subject: `Shared Post: ${postData.title || "Content"}`,
         html,
       });
     } catch (error) {
@@ -148,140 +152,11 @@ export const sendShareEmail = internalAction({
   },
 });
 
-// Функция для проверки статуса письма
-export const checkEmailStatus = internalAction({
-  args: { emailId: v.string() },
-  returns: v.any(),
-  handler: async (ctx, args) => {
-    try {
-      const emailId = args.emailId as EmailId;
-      const status = await resend.status(ctx, emailId);
-      return status;
-    } catch (error) {
-      throw error;
-    }
-  },
-});
-
-// Вспомогательные функции для получения данных
 export const getNotificationById = internalQuery({
   args: { id: v.id("notifications") },
-  returns: v.union(
-    v.object({
-      _id: v.id("notifications"),
-      _creationTime: v.number(),
-      userId: v.id("users"),
-      postId: v.id("posts"),
-      type: v.union(
-        v.literal("deadline"),
-        v.literal("reminder"),
-        v.literal("overdue"),
-        v.literal("published"),
-        v.literal("daily"),
-      ),
-      message: v.string(),
-      sent: v.boolean(),
-      scheduledFor: v.number(),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
+  returns: v.union(v.any(), v.null()),
+  handler: async (ctx, args): Promise<Doc<"notifications"> | null> => {
     return await ctx.db.get(args.id);
-  },
-});
-
-export const getUserById = internalQuery({
-  args: { id: v.id("users") },
-  returns: v.union(
-    v.object({
-      _id: v.id("users"),
-      _creationTime: v.number(),
-      name: v.optional(v.string()),
-      email: v.optional(v.string()),
-      phone: v.optional(v.string()),
-      image: v.optional(v.string()),
-      emailVerificationTime: v.optional(v.number()),
-      phoneVerificationTime: v.optional(v.number()),
-      isAnonymous: v.optional(v.boolean()),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
-});
-
-export const getPostById = internalQuery({
-  args: { id: v.id("posts") },
-  returns: v.union(
-    v.object({
-      _id: v.id("posts"),
-      _creationTime: v.number(),
-      title: v.string(),
-      content: v.string(),
-      platform: v.union(
-        v.literal("instagram"),
-        v.literal("X"),
-        v.literal("youtube"),
-        v.literal("telegram"),
-      ),
-      status: v.union(v.literal("idea"), v.literal("schedule")),
-      scheduledDate: v.optional(v.number()),
-      publishedAt: v.optional(v.number()),
-      hashtags: v.array(v.string()),
-      links: v.array(v.string()),
-      mentions: v.array(v.string()),
-      mediaIds: v.array(v.id("_storage")),
-      authorBio: v.optional(v.string()),
-      userId: v.id("users"),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      enableNotifications: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
-      reminderHours: v.optional(v.number()),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
-});
-
-export const getUserPostsForReminders = internalQuery({
-  args: { userId: v.id("users") },
-  returns: v.array(
-    v.object({
-      _id: v.id("posts"),
-      _creationTime: v.number(),
-      title: v.string(),
-      content: v.string(),
-      platform: v.union(
-        v.literal("instagram"),
-        v.literal("X"),
-        v.literal("youtube"),
-        v.literal("telegram"),
-      ),
-      status: v.union(v.literal("idea"), v.literal("schedule")),
-      scheduledDate: v.optional(v.number()),
-      publishedAt: v.optional(v.number()),
-      hashtags: v.array(v.string()),
-      links: v.array(v.string()),
-      mentions: v.array(v.string()),
-      mediaIds: v.array(v.id("_storage")),
-      authorBio: v.optional(v.string()),
-      userId: v.id("users"),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      enableNotifications: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
-      reminderHours: v.optional(v.number()),
-    }),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("posts")
-      .filter((q) => q.eq(q.field("userId"), args.userId))
-      .collect();
   },
 });
 
@@ -293,17 +168,6 @@ export const markNotificationSent = internalMutation({
     return null;
   },
 });
-
-// Функции для генерации HTML контента email (стиль как в приложении - черный дизайн)
-function getPlatformName(platform: string): string {
-  const names = {
-    instagram: "Instagram",
-    X: "X",
-    youtube: "YouTube",
-    telegram: "Telegram",
-  };
-  return names[platform as keyof typeof names] || platform;
-}
 
 function getPlatformColor(platform: string): string {
   const colors = {
@@ -333,36 +197,40 @@ function getStatusInfo(status: string) {
 function getEmailSubject(type: string): string {
   switch (type) {
     case "deadline":
-      return "📅 Приближается дедлайн публикации";
+      return "📅 Deadline approaching";
     case "reminder":
-      return "⏰ Напоминание о публикации контента";
+      return "⏰ Content publication reminder";
     case "overdue":
-      return "🚨 Просроченный контент";
+      return "🚨 Overdue content";
     case "published":
-      return "🎉 Контент опубликован!";
+      return "🎉 Content published!";
     case "daily":
-      return "📋 Ежедневный отчет по контенту";
+      return "📋 Daily content report";
     default:
       return "Content Creator Notification";
   }
 }
 
-function getEmailContent(notification: any, post?: any): string {
+function getEmailContent(
+  notification: any,
+  post?: any,
+  mediaUrls: string[] = [],
+): string {
   const baseStyle = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #000000; color: #ffffff;">
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+      <div style="background-color: #000000; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px; border: 1px solid #333;">
         <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Content Creator Assistant</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Ваш помощник по управлению контентом</p>
+        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Your content management assistant</p>
       </div>
   `;
 
   const footerStyle = `
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; text-align: center;">
         <p style="color: #999; font-size: 14px; margin: 0;">
-          Это автоматическое уведомление от Content Creator Assistant
+          This is an automatic notification from Content Creator Assistant
         </p>
         <p style="color: #666; font-size: 12px; margin: 10px 0 0 0;">
-          Вы получили это письмо, потому что включили уведомления для своих постов
+          You received this email because you enabled notifications for your posts
         </p>
       </div>
     </div>
@@ -430,6 +298,32 @@ function getEmailContent(notification: any, post?: any): string {
               : ""
           }
 
+          ${
+            mediaUrls && mediaUrls.length > 0
+              ? `
+            <div style="margin-bottom: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+              ${mediaUrls
+                .slice(0, 4)
+                .map(
+                  (url: string) => `
+                <img src="${url}" alt="Post media" style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #333;" />
+              `,
+                )
+                .join("")}
+              ${
+                mediaUrls.length > 4
+                  ? `
+                <div style="display: flex; align-items: center; justify-content: center; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; color: #999; font-size: 12px;">
+                  +${mediaUrls.length - 4} more
+                </div>
+              `
+                  : ""
+              }
+            </div>
+          `
+              : ""
+          }
+
           <!-- Footer -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
             ${
@@ -465,16 +359,16 @@ function getEmailContent(notification: any, post?: any): string {
 function getDailyReminderContent(posts: any[]): string {
   const baseStyle = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #000000; color: #ffffff;">
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
-        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">📋 Ежедневный отчет</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Ваш контент-план на сегодня</p>
+      <div style="background-color: #000000; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px; border: 1px solid #333;">
+        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">📋 Daily Report</h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Your content plan for today</p>
       </div>
   `;
 
   const footerStyle = `
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; text-align: center;">
         <p style="color: #999; font-size: 14px; margin: 0;">
-          Удачного дня и продуктивной работы! 🚀
+          Have a great day and productive work! 🚀
         </p>
       </div>
     </div>
@@ -485,22 +379,22 @@ function getDailyReminderContent(posts: any[]): string {
 
   let content = `
     <div style="background: #000000; padding: 20px; border-radius: 10px; border: 1px solid #333;">
-      <h2 style="color: #ffffff; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">Сводка по контенту</h2>
+      <h2 style="color: #ffffff; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">Content Summary</h2>
       
       <div style="display: grid; gap: 12px; margin-bottom: 24px;">
         <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 4px solid #4caf50;">
-          <h4 style="margin: 0 0 4px 0; color: #4caf50; font-size: 14px; font-weight: 600;">⏰ Запланировано: ${scheduledPosts.length}</h4>
+          <h4 style="margin: 0 0 4px 0; color: #4caf50; font-size: 14px; font-weight: 600;">⏰ Scheduled: ${scheduledPosts.length}</h4>
         </div>
 
         <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 4px solid #9c27b0;">
-          <h4 style="margin: 0 0 4px 0; color: #9c27b0; font-size: 14px; font-weight: 600;">💡 Идей: ${ideaPosts.length}</h4>
+          <h4 style="margin: 0 0 4px 0; color: #9c27b0; font-size: 14px; font-weight: 600;">💡 Ideas: ${ideaPosts.length}</h4>
         </div>
       </div>
   `;
 
   if (scheduledPosts.length > 0) {
     content += `
-      <h3 style="color: #ffffff; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">Сегодня к публикации:</h3>
+      <h3 style="color: #ffffff; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">Today's publications:</h3>
       <div style="margin-bottom: 16px;">
     `;
 
@@ -562,7 +456,7 @@ function getDailyReminderContent(posts: any[]): string {
         `;
       });
     } else {
-      content += `<p style="color: #999999; font-style: italic; font-size: 14px;">На сегодня публикаций не запланировано</p>`;
+      content += `<p style="color: #999999; font-style: italic; font-size: 14px;">No publications scheduled for today</p>`;
     }
 
     content += `</div>`;
@@ -576,22 +470,24 @@ function getDailyReminderContent(posts: any[]): string {
 export function createShareEmailContent(
   postData: any,
   userEmail: string,
+  mediaUrls: string[] = [],
 ): string {
   const baseStyle = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #000000; color: #ffffff;">
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px;">
+      <div style="background-color: #000000; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px; border: 1px solid #333;">
         <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Content Creator Assistant</h1>
-        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Ваш помощник по управлению контентом</p>
+        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">@${userEmail} shared this with you</p>
+        <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">What do you think about this?</p>
       </div>
   `;
 
   const footerStyle = `
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; text-align: center;">
         <p style="color: #999; font-size: 14px; margin: 0;">
-          Это автоматическое уведомление от Content Creator Assistant
+          This is an automatic notification from Content Creator Assistant
         </p>
         <p style="color: #666; font-size: 12px; margin: 10px 0 0 0;">
-          Вы получили это письмо, потому что включили уведомления для своих постов
+          You received this email because you enabled notifications for your posts
         </p>
       </div>
     </div>
@@ -608,9 +504,7 @@ export function createShareEmailContent(
         <!-- Header -->
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, ${platformColor}); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-              ${getPlatformName(postData.platform).charAt(0)}
-            </div>
+            
             <div>
               <div style="font-weight: 600; color: #ffffff; font-size: 16px;">${postData.title || "No title"}</div>
             </div>
@@ -659,6 +553,80 @@ export function createShareEmailContent(
               : ""
           }
 
+          ${
+            postData.mentions && postData.mentions.length > 0
+              ? `
+            <div style="margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
+              ${postData.mentions
+                .slice(0, 3)
+                .map(
+                  (mention: string) => `
+                <span style="font-size: 12px; color: #4a9eff;">@${mention}</span>
+              `,
+                )
+                .join("")}
+              ${
+                postData.mentions.length > 3
+                  ? `
+                <span style="font-size: 12px; color: #666666;">+${postData.mentions.length - 3} more</span>
+              `
+                  : ""
+              }
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            postData.links && postData.links.length > 0
+              ? `
+            <div style="margin-bottom: 8px;">
+              ${postData.links
+                .slice(0, 2)
+                .map(
+                  (link: string) => `
+                <a href="${link}" style="font-size: 12px; color: #4a9eff; text-decoration: none; word-break: break-all; display: block; margin-bottom: 2px;">${link}</a>
+              `,
+                )
+                .join("")}
+              ${
+                postData.links.length > 2
+                  ? `
+                <span style="font-size: 12px; color: #666666;">+${postData.links.length - 2} more links</span>
+              `
+                  : ""
+              }
+            </div>
+          `
+              : ""
+          }
+
+          ${
+            mediaUrls && mediaUrls.length > 0
+              ? `
+            <div style="margin-bottom: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+              ${mediaUrls
+                .slice(0, 4)
+                .map(
+                  (url: string) => `
+                <img src="${url}" alt="Post media" style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #333;" />
+              `,
+                )
+                .join("")}
+              ${
+                mediaUrls.length > 4
+                  ? `
+                <div style="display: flex; align-items: center; justify-content: center; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; color: #999; font-size: 12px;">
+                  +${mediaUrls.length - 4} more
+                </div>
+              `
+                  : ""
+              }
+            </div>
+          `
+              : ""
+          }
+
           <!-- Footer -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
             ${
@@ -683,7 +651,7 @@ export function createShareEmailContent(
     baseStyle +
     `
     <div style="background: #000000; padding: 20px; border-radius: 10px; border: 1px solid #333;">
-      <p style="font-size: 18px; color: #ffffff; margin: 0 0 20px 0; font-weight: 500;">Пост поделен с вами</p>
+      <p style="font-size: 18px; color: #ffffff; margin: 0 0 20px 0; font-weight: 500;">Idea shared with you:</p>
       ${content}
     </div>
   ` +

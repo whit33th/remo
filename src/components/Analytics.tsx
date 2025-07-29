@@ -11,7 +11,7 @@ import {
   Lightbulb,
   Mail,
 } from "lucide-react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@/convex/_generated/api";
 import { PlatformIcon } from "./PlatformIcons";
 
 export function Analytics() {

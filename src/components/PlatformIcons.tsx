@@ -11,7 +11,6 @@ interface IconProps {
   size?: number;
 }
 
-// Реэкспорт иконок из UI для обратной совместимости
 export const InstagramIcon: React.FC<IconProps> = (props) => (
   <UIInstagramIcon {...props} />
 );

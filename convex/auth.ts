@@ -1,7 +1,7 @@
 import { convexAuth, getAuthUserId } from "@convex-dev/auth/server";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
@@ -21,6 +21,8 @@ export const loggedInUser = query({
       emailVerificationTime: v.optional(v.number()),
       phoneVerificationTime: v.optional(v.number()),
       isAnonymous: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      notificationsEnabled: v.optional(v.boolean()),
     }),
     v.null(),
   ),
@@ -34,5 +36,28 @@ export const loggedInUser = query({
       return null;
     }
     return user;
+  },
+});
+
+export const updateUserSettings = mutation({
+  args: {
+    notificationTime: v.optional(v.string()),
+    notificationsEnabled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(userId, {
+      notificationTime: args.notificationTime,
+      notificationsEnabled: args.notificationsEnabled,
+    });
   },
 });

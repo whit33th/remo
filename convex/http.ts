@@ -6,10 +6,8 @@ import { resend } from "./sendEmails";
 
 const http = httpRouter();
 
-// Add auth routes
 auth.addHttpRoutes(http);
 
-// Resend webhook endpoint
 http.route({
   path: "/resend-webhook",
   method: "POST",
@@ -18,7 +16,6 @@ http.route({
   }),
 });
 
-// Webhook endpoint for handling scheduled post notifications
 http.route({
   path: "/webhook/notifications",
   method: "POST",
@@ -26,7 +23,6 @@ http.route({
     try {
       const body = await req.json();
 
-      // Process notification webhook
       if (body.type === "scheduled_post_reminder") {
         await ctx.runAction(internal.sendEmails.sendNotificationEmail, {
           notificationId: body.notificationId,

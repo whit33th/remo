@@ -5,16 +5,13 @@ import {
   AtSign,
   Calendar,
   Clock,
-  Eye,
   FileText,
   Hash,
   Image as ImageIcon,
   Lightbulb,
   Link,
   Mail,
-  MapPin,
   Send,
-  Settings,
   Trash2,
   Video,
   X,
@@ -22,8 +19,8 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { PlatformIcon } from "./PlatformIcons";
 
 interface PostEditorProps {
@@ -41,19 +38,11 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
     scheduledTime: "",
     hashtags: [] as string[],
     hashtagInput: "",
-    links: "",
-    mentions: "",
+    links: [] as string[],
+    linkInput: "",
+    mentions: [] as string[],
+    mentionInput: "",
     authorBio: "",
-    location: "",
-    story: false,
-    reels: false,
-    poll: "",
-    thread: false,
-    category: "",
-    privacy: "public" as "public" | "private" | "unlisted",
-    thumbnail: "",
-    timestamps: "",
-    buttons: [] as string[],
     enableNotifications: false,
     notificationTime: "09:00",
     reminderHours: 24,
@@ -61,7 +50,7 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [publishing, setPublishing] = useState(false);
+  // const [publishing, setPublishing] = useState(false);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [existingMediaIds, setExistingMediaIds] = useState<Id<"_storage">[]>(
     [],
@@ -114,19 +103,11 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
             : "",
           hashtags: post.hashtags,
           hashtagInput: "",
-          links: post.links.join(", "),
-          mentions: post.mentions.join(", "),
+          links: post.links,
+          linkInput: "",
+          mentions: post.mentions,
+          mentionInput: "",
           authorBio: post.authorBio || "",
-          location: "",
-          story: false,
-          reels: false,
-          poll: "",
-          thread: false,
-          category: "",
-          privacy: "public",
-          thumbnail: "",
-          timestamps: "",
-          buttons: [],
           enableNotifications: post.enableNotifications || false,
           notificationTime: post.notificationTime || "09:00",
           reminderHours: post.reminderHours || 24,
@@ -205,6 +186,105 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
     setFormData((prev) => ({
       ...prev,
       hashtags: prev.hashtags.filter((hashtag) => hashtag !== hashtagToRemove),
+    }));
+  };
+
+  const handleLinkInputChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, linkInput: value }));
+  };
+
+  const handleLinkInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === " " || e.key === ",") {
+      e.preventDefault();
+      const trimmedValue = formData.linkInput.trim();
+      if (trimmedValue && !formData.links.includes(trimmedValue)) {
+        // Автоматически добавляем https:// если ссылка не начинается с протокола
+        let processedValue = trimmedValue;
+        if (
+          !trimmedValue.startsWith("http://") &&
+          !trimmedValue.startsWith("https://") &&
+          !trimmedValue.startsWith("www.")
+        ) {
+          processedValue = "https://" + trimmedValue;
+        } else if (trimmedValue.startsWith("www.")) {
+          processedValue = "https://" + trimmedValue;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          links: [...prev.links, processedValue],
+          linkInput: "",
+        }));
+      }
+    }
+  };
+
+  const handleLinkInputBlur = () => {
+    const trimmedValue = formData.linkInput.trim();
+    if (trimmedValue && !formData.links.includes(trimmedValue)) {
+      let processedValue = trimmedValue;
+      if (
+        !trimmedValue.startsWith("http://") &&
+        !trimmedValue.startsWith("https://") &&
+        !trimmedValue.startsWith("www.")
+      ) {
+        processedValue = "https://" + trimmedValue;
+      } else if (trimmedValue.startsWith("www.")) {
+        processedValue = "https://" + trimmedValue;
+      }
+      setFormData((prev) => ({
+        ...prev,
+        links: [...prev.links, processedValue],
+        linkInput: "",
+      }));
+    }
+  };
+
+  const removeLink = (linkToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      links: prev.links.filter((link) => link !== linkToRemove),
+    }));
+  };
+
+  const handleMentionInputChange = (value: string) => {
+    let processedValue = value;
+    if (value && !value.startsWith("@")) {
+      processedValue = "@" + value;
+    }
+    setFormData((prev) => ({ ...prev, mentionInput: processedValue }));
+  };
+
+  const handleMentionInputKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Enter" || e.key === " " || e.key === ",") {
+      e.preventDefault();
+      const trimmedValue = formData.mentionInput.trim().replace(/^@+/, "");
+      if (trimmedValue && !formData.mentions.includes(trimmedValue)) {
+        setFormData((prev) => ({
+          ...prev,
+          mentions: [...prev.mentions, trimmedValue],
+          mentionInput: "",
+        }));
+      }
+    }
+  };
+
+  const handleMentionInputBlur = () => {
+    const trimmedValue = formData.mentionInput.trim().replace(/^@+/, "");
+    if (trimmedValue && !formData.mentions.includes(trimmedValue)) {
+      setFormData((prev) => ({
+        ...prev,
+        mentions: [...prev.mentions, trimmedValue],
+        mentionInput: "",
+      }));
+    }
+  };
+
+  const removeMention = (mentionToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      mentions: prev.mentions.filter((mention) => mention !== mentionToRemove),
     }));
   };
 
@@ -335,14 +415,8 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
         status: formData.status,
         scheduledDate: scheduledDateTime,
         hashtags: formData.hashtags,
-        links: formData.links
-          .split(",")
-          .map((link) => link.trim())
-          .filter(Boolean),
-        mentions: formData.mentions
-          .split(",")
-          .map((mention) => mention.trim())
-          .filter(Boolean),
+        links: formData.links,
+        mentions: formData.mentions,
         mediaIds: allMediaIds,
         authorBio: formData.authorBio || undefined,
         enableNotifications: formData.enableNotifications,
@@ -365,28 +439,28 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
     }
   };
 
-  const handlePublish = async () => {
-    if (!postId || postId === "new") {
-      toast.error("Please save the post first");
-      return;
-    }
+  // const handlePublish = async () => {
+  //   if (!postId || postId === "new") {
+  //     toast.error("Please save the post first");
+  //     return;
+  //   }
 
-    setPublishing(true);
-    try {
-      await publishPost({
-        postId: postId as Id<"posts">,
-        platform: formData.platform,
-        publishNow: true,
-      });
-      toast.success(`Post scheduled for ${formData.platform}!`);
-      onClose();
-    } catch (error) {
-      console.error("Error publishing post:", error);
-      toast.error("Error publishing post");
-    } finally {
-      setPublishing(false);
-    }
-  };
+  //   setPublishing(true);
+  //   try {
+  //     await publishPost({
+  //       postId: postId as Id<"posts">,
+  //       platform: formData.platform,
+  //       publishNow: true,
+  //     });
+  //     toast.success(`Post scheduled for ${formData.platform}!`);
+  //     onClose();
+  //   } catch (error) {
+  //     console.error("Error publishing post:", error);
+  //     toast.error("Error publishing post");
+  //   } finally {
+  //     setPublishing(false);
+  //   }
+  // };
 
   const handleDelete = async () => {
     if (!postId || postId === "new") return;
@@ -432,155 +506,12 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
   };
 
   const renderPlatformSpecificFields = () => {
-    if (!platformFields) return null;
-
-    const fields = [];
-
-    // Instagram specific fields
-    if (formData.platform === "instagram") {
-      fields.push(
-        <div key="location" className="space-y-2">
-          <label className="flex items-center space-x-2 text-sm font-medium">
-            <MapPin className="h-4 w-4" />
-            <span>Location</span>
-          </label>
-          <input
-            type="text"
-            value={formData.location}
-            onChange={(e) => handleInputChange("location", e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-purple-500"
-            placeholder="Add location..."
-          />
-        </div>,
-        <div key="story-reels" className="flex space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={formData.story}
-              onChange={(e) => handleInputChange("story", e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm">Story</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={formData.reels}
-              onChange={(e) => handleInputChange("reels", e.target.checked)}
-              className="rounded"
-            />
-            <span className="text-sm">Reels</span>
-          </label>
-        </div>,
-      );
-    }
-
-    // X specific fields
-    if (formData.platform === "X") {
-      fields.push(
-        <div key="poll" className="space-y-2">
-          <label className="flex items-center space-x-2 text-sm font-medium">
-            <Settings className="h-4 w-4" />
-            <span>Poll Question</span>
-          </label>
-          <input
-            type="text"
-            value={formData.poll}
-            onChange={(e) => handleInputChange("poll", e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-blue-500"
-            placeholder="Add poll question..."
-          />
-        </div>,
-        <div key="thread" className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={formData.thread}
-            onChange={(e) => handleInputChange("thread", e.target.checked)}
-            className="rounded"
-          />
-          <span className="text-sm">Thread</span>
-        </div>,
-      );
-    }
-
-    // YouTube specific fields
-    if (formData.platform === "youtube") {
-      fields.push(
-        <div key="category" className="space-y-2">
-          <label className="flex items-center space-x-2 text-sm font-medium">
-            <Settings className="h-4 w-4" />
-            <span>Category</span>
-          </label>
-          <select
-            value={formData.category}
-            onChange={(e) => handleInputChange("category", e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-red-500"
-          >
-            <option value="">Select category</option>
-            <option value="entertainment">Entertainment</option>
-            <option value="education">Education</option>
-            <option value="gaming">Gaming</option>
-            <option value="music">Music</option>
-            <option value="news">News</option>
-            <option value="sports">Sports</option>
-            <option value="technology">Technology</option>
-          </select>
-        </div>,
-        <div key="privacy" className="space-y-2">
-          <label className="flex items-center space-x-2 text-sm font-medium">
-            <Eye className="h-4 w-4" />
-            <span>Privacy</span>
-          </label>
-          <select
-            value={formData.privacy}
-            onChange={(e) => handleInputChange("privacy", e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-red-500"
-          >
-            <option value="public">Public</option>
-            <option value="private">Private</option>
-            <option value="unlisted">Unlisted</option>
-          </select>
-        </div>,
-        <div key="timestamps" className="space-y-2">
-          <label className="flex items-center space-x-2 text-sm font-medium">
-            <Clock className="h-4 w-4" />
-            <span>Timestamps</span>
-          </label>
-          <textarea
-            value={formData.timestamps}
-            onChange={(e) => handleInputChange("timestamps", e.target.value)}
-            rows={3}
-            className="w-full resize-none rounded-lg border border-gray-300 bg-neutral-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-red-500"
-            placeholder="0:00 - Introduction&#10;2:30 - Main content&#10;5:45 - Conclusion"
-          />
-        </div>,
-      );
-    }
-
-    // Telegram specific fields
-    if (formData.platform === "telegram") {
-      fields.push(
-        <div key="buttons" className="space-y-2">
-          <label className="flex items-center space-x-2 text-sm font-medium">
-            <Settings className="h-4 w-4" />
-            <span>Inline Buttons</span>
-          </label>
-          <input
-            type="text"
-            value={formData.buttons.join(", ")}
-            onChange={(e) => handleInputChange("buttons", e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-2 text-black focus:border-transparent focus:ring-2 focus:ring-cyan-500"
-            placeholder="Button 1, Button 2, Button 3..."
-          />
-        </div>,
-      );
-    }
-
-    return fields;
+    // Все платформы используют одинаковые поля
+    return null;
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black text-neutral-300">
+    <div className="min-h-screen bg-black text-neutral-300">
       {/* Header */}
       <div className="sticky top-0 flex flex-col border-b border-neutral-900 bg-black/90 px-4 py-3 backdrop-blur-xl sm:grid sm:grid-cols-3 sm:items-center">
         {/* Mobile: Top row with close button and title */}
@@ -645,7 +576,7 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
           >
             Save
           </button>
-          {postId !== "new" && (
+          {/* {postId !== "new" && (
             <>
               <button
                 onClick={handlePublish}
@@ -677,7 +608,7 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
                 <Trash2 className="h-4 w-4" />
               </button>
             </>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -1034,33 +965,65 @@ export function PostEditor({ postId, onClose }: PostEditorProps) {
           </div>
         </div>
 
-        {/* Links and Mentions */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-2 flex items-center space-x-2 text-sm font-medium">
-              <Link className="h-4 w-4" />
-              <span>Links</span>
-            </label>
-            <input
-              type="text"
-              value={formData.links}
-              onChange={(e) => handleInputChange("links", e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-3 text-black focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com"
-            />
+        {/* Links */}
+        <div>
+          <label className="mb-2 flex items-center space-x-2 text-sm font-medium">
+            <Link className="h-4 w-4" />
+            <span>Links</span>
+          </label>
+          <input
+            type="text"
+            value={formData.linkInput}
+            onChange={(e) => handleLinkInputChange(e.target.value)}
+            onKeyDown={handleLinkInputKeyDown}
+            onBlur={handleLinkInputBlur}
+            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-3 text-black focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            placeholder="https://example.com or example.com"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            {formData.links.map((link, index) => (
+              <div
+                key={index}
+                className="group relative flex cursor-pointer items-center rounded-md bg-neutral-950 px-3 py-1.5 text-sm transition-colors hover:bg-neutral-700"
+                onClick={() => removeLink(link)}
+              >
+                {link}
+                <span className="ml-2 text-neutral-400 transition-colors group-hover:text-neutral-200">
+                  ×
+                </span>
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="mb-2 flex items-center space-x-2 text-sm font-medium">
-              <AtSign className="h-4 w-4" />
-              <span>Mentions</span>
-            </label>
-            <input
-              type="text"
-              value={formData.mentions}
-              onChange={(e) => handleInputChange("mentions", e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-3 text-black focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              placeholder="@username"
-            />
+        </div>
+
+        {/* Mentions */}
+        <div>
+          <label className="mb-2 flex items-center space-x-2 text-sm font-medium">
+            <AtSign className="h-4 w-4" />
+            <span>Mentions</span>
+          </label>
+          <input
+            type="text"
+            value={formData.mentionInput}
+            onChange={(e) => handleMentionInputChange(e.target.value)}
+            onKeyDown={handleMentionInputKeyDown}
+            onBlur={handleMentionInputBlur}
+            className="w-full rounded-lg border border-gray-300 bg-neutral-300 px-3 py-3 text-black focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            placeholder="@username"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            {formData.mentions.map((mention, index) => (
+              <div
+                key={index}
+                className="group relative flex cursor-pointer items-center rounded-md bg-neutral-950 px-3 py-1.5 text-sm transition-colors hover:bg-neutral-700"
+                onClick={() => removeMention(mention)}
+              >
+                @{mention}
+                <span className="ml-2 text-neutral-400 transition-colors group-hover:text-neutral-200">
+                  ×
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 

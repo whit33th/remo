@@ -37,11 +37,7 @@ export function BottomNavigation({
   ];
 
   const handleNavClick = (id: string) => {
-    if (id === "create") {
-      onCreatePost();
-    } else {
-      onViewChange(id as "feed" | "calendar" | "create" | "profile");
-    }
+    onViewChange(id as "feed" | "calendar" | "create" | "profile");
   };
 
   return (

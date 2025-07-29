@@ -7,25 +7,22 @@ import {
 } from "./_generated/server";
 import { v } from "convex/values";
 
-// Check for overdue posts every hour
 const crons = cronJobs();
 
 crons.interval(
   "check overdue posts",
-  { minutes: 60 }, // Every hour
+  { minutes: 60 },
   internal.crons.checkOverduePosts,
   {},
 );
 
-// Send daily reminders at 9 AM
 crons.cron(
   "daily reminders",
-  "0 9 * * *", // Every day at 9 AM
+  "0 9 * * *",
   internal.crons.sendDailyReminders,
   {},
 );
 
-// Clean up old emails from resend component every hour
 crons.interval(
   "Remove old emails from the resend component",
   { hours: 1 },
@@ -42,7 +39,6 @@ export const checkOverduePosts = internalAction({
     });
 
     for (const post of overduePosts) {
-      // Create overdue notification
       const notificationId = await ctx.runMutation(
         internal.notifications.createInternalNotification,
         {
@@ -54,7 +50,6 @@ export const checkOverduePosts = internalAction({
         },
       );
 
-      // Send email notification using new sendEmails function
       await ctx.runAction(internal.sendEmails.sendNotificationEmail, {
         notificationId,
       });
@@ -73,9 +68,16 @@ export const sendDailyReminders = internalAction({
     );
 
     for (const user of usersWithNotifications) {
-      await ctx.runAction(internal.notifications.scheduleDailyReminders, {
+      const notificationTime = user.notificationTime || "09:00";
+
+      // Создаем ежедневное уведомление для пользователя
+      await ctx.runMutation(internal.notifications.createInternalNotification, {
         userId: user._id,
-        notificationTime: "09:00",
+        postId: "daily" as any, // Используем специальный ID для ежедневных уведомлений
+        type: "daily",
+        message:
+          "Ежедневное напоминание: проверьте ваши запланированные посты и идеи",
+        scheduledFor: Date.now(),
       });
     }
     return null;
@@ -140,25 +142,60 @@ export const getUsersWithNotificationsEnabled = internalQuery({
       emailVerificationTime: v.optional(v.number()),
       phoneVerificationTime: v.optional(v.number()),
       isAnonymous: v.optional(v.boolean()),
+      notificationTime: v.optional(v.string()),
+      notificationsEnabled: v.optional(v.boolean()),
     }),
   ),
   handler: async (ctx) => {
-    const posts = await ctx.db
-      .query("posts")
-      .filter((q) => q.eq(q.field("enableNotifications"), true))
+    // Получаем всех пользователей с включенными уведомлениями
+    const users = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("notificationsEnabled"), true))
       .collect();
 
-    const userIds = [...new Set(posts.map((p) => p.userId))];
-    const users = [];
-
-    for (const userId of userIds) {
-      const user = await ctx.db.get(userId);
-      if (user) {
-        users.push(user);
-      }
-    }
-
     return users;
+  },
+});
+
+export const getUserPostsForDailyReport = internalQuery({
+  args: { userId: v.id("users") },
+  returns: v.array(
+    v.object({
+      _id: v.id("posts"),
+      title: v.string(),
+      content: v.string(),
+      platform: v.union(
+        v.literal("instagram"),
+        v.literal("X"),
+        v.literal("youtube"),
+        v.literal("telegram"),
+      ),
+      status: v.union(v.literal("idea"), v.literal("schedule")),
+      scheduledDate: v.optional(v.number()),
+      createdAt: v.number(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const oneDayFromNow = now + 24 * 60 * 60 * 1000;
+
+    return await ctx.db
+      .query("posts")
+      .withIndex("by_user")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), args.userId),
+          q.or(
+            q.eq(q.field("status"), "idea"),
+            q.and(
+              q.eq(q.field("status"), "schedule"),
+              q.gte(q.field("scheduledDate"), now),
+              q.lte(q.field("scheduledDate"), oneDayFromNow),
+            ),
+          ),
+        ),
+      )
+      .collect();
   },
 });
 
@@ -172,7 +209,6 @@ export const cleanupResend = internalMutation({
     await ctx.scheduler.runAfter(
       0,
       components.resend.lib.cleanupAbandonedEmails,
-      // These generally indicate a bug, so keep them around for longer.
       { olderThan: 4 * ONE_WEEK_MS },
     );
   },

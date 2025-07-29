@@ -53,7 +53,6 @@ export function SocialIcon({
   }
 }
 
-// Экспорт отдельных иконок для удобства
 export const InstagramIcon = (props: Omit<SocialIconProps, "platform">) => (
   <SocialIcon platform="instagram" {...props} />
 );
@@ -70,7 +69,6 @@ export const TelegramIcon = (props: Omit<SocialIconProps, "platform">) => (
   <SocialIcon platform="telegram" {...props} />
 );
 
-// Объект для обратной совместимости
 export const SOCIAL_ICONS = {
   instagram: InstagramIcon,
   X: XIcon,

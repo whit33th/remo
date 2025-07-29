@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import type { Platform } from "../types";
 
-// Platform colors for gradients
 export const PLATFORM_COLORS: Record<Platform, string> = {
   instagram: "from-purple-500 to-pink-500",
   X: "from-blue-400 to-blue-600",
@@ -17,7 +16,6 @@ export const PLATFORM_COLORS: Record<Platform, string> = {
   telegram: "from-cyan-400 to-cyan-600",
 };
 
-// Platform icons - теперь используются SVG иконки из lucide-react
 export const PLATFORM_ICONS: Record<Platform, LucideIcon> = {
   instagram: Camera,
   X: Twitter,
@@ -25,7 +23,6 @@ export const PLATFORM_ICONS: Record<Platform, LucideIcon> = {
   telegram: Send,
 };
 
-// Status configurations
 export const STATUS_CONFIG = {
   idea: {
     text: "Idea",
@@ -39,7 +36,6 @@ export const STATUS_CONFIG = {
   },
 } as const;
 
-// Platform-specific field requirements
 export const PLATFORM_FIELDS = {
   instagram: {
     contentLimit: 2200,
@@ -67,10 +63,9 @@ export const PLATFORM_FIELDS = {
   },
 } as const;
 
-// Grid layouts for different platforms
 export const GRID_LAYOUTS = {
   instagram: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
   youtube: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
-  X: "space-y-4",
-  telegram: "space-y-3 mx-auto",
+  X: "space-y-4 px-4",
+  telegram: "space-y-3 mx-auto px-4",
 } as const;

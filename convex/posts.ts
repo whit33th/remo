@@ -1,15 +1,29 @@
-import { v } from "convex/values";
-import {
-  query,
-  mutation,
-  action,
-  internalMutation,
-  internalQuery,
-  internalAction,
-} from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { components } from "./_generated/api";
+import { Doc, Id } from "./_generated/dataModel";
+import { action, internalQuery, mutation, query } from "./_generated/server";
+
+type PostWithMedia = Doc<"posts"> & {
+  mediaUrls: (string | null)[];
+  mediaTypes: string[];
+};
+
+type CreatePostArgs = {
+  title: string;
+  content: string;
+  platform: "instagram" | "X" | "youtube" | "telegram";
+  status: "idea" | "schedule";
+  scheduledDate?: number;
+  hashtags: string[];
+  links: string[];
+  mentions: string[];
+  mediaIds: Id<"_storage">[];
+  authorBio?: string;
+  enableNotifications?: boolean;
+  notificationTime?: string;
+  reminderHours?: number;
+};
 
 export const createPost = mutation({
   args: {
@@ -33,7 +47,7 @@ export const createPost = mutation({
     reminderHours: v.optional(v.number()),
   },
   returns: v.id("posts"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args: CreatePostArgs): Promise<Id<"posts">> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       throw new Error("Not authenticated");
@@ -50,7 +64,6 @@ export const createPost = mutation({
       reminderHours: args.reminderHours || 24,
     });
 
-    // Schedule notifications if enabled and post is scheduled
     if (
       args.enableNotifications &&
       args.status === "schedule" &&
@@ -115,7 +128,6 @@ export const updatePost = mutation({
       updatedAt: Date.now(),
     });
 
-    // Reschedule notifications if settings changed
     if (
       updates.enableNotifications !== undefined ||
       updates.scheduledDate !== undefined ||
@@ -156,7 +168,6 @@ export const deletePost = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Получаем пост для проверки владельца и медиафайлов
     const post = await ctx.db.get(args.id);
     if (!post) {
       throw new Error("Post not found");
@@ -166,19 +177,16 @@ export const deletePost = mutation({
       throw new Error("Not authorized to delete this post");
     }
 
-    // Удаляем медиафайлы из хранилища
     if (post.mediaIds && post.mediaIds.length > 0) {
       for (const mediaId of post.mediaIds) {
         try {
           await ctx.storage.delete(mediaId);
         } catch (error) {
           console.error("Error deleting media file:", error);
-          // Продолжаем удаление поста даже если не удалось удалить медиафайл
         }
       }
     }
 
-    // Удаляем пост
     await ctx.db.delete(args.id);
 
     return { success: true };
@@ -197,37 +205,8 @@ export const getUserPosts = query({
     ),
     status: v.optional(v.union(v.literal("idea"), v.literal("schedule"))),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("posts"),
-      _creationTime: v.number(),
-      title: v.string(),
-      content: v.string(),
-      platform: v.union(
-        v.literal("instagram"),
-        v.literal("X"),
-        v.literal("youtube"),
-        v.literal("telegram"),
-      ),
-      status: v.union(v.literal("idea"), v.literal("schedule")),
-      scheduledDate: v.optional(v.number()),
-      publishedAt: v.optional(v.number()),
-      hashtags: v.array(v.string()),
-      links: v.array(v.string()),
-      mentions: v.array(v.string()),
-      mediaIds: v.array(v.id("_storage")),
-      authorBio: v.optional(v.string()),
-      userId: v.id("users"),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      enableNotifications: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
-      reminderHours: v.optional(v.number()),
-      mediaUrls: v.array(v.union(v.string(), v.null())),
-      mediaTypes: v.array(v.string()),
-    }),
-  ),
-  handler: async (ctx, args) => {
+  returns: v.array(v.any()),
+  handler: async (ctx, args): Promise<PostWithMedia[]> => {
     const userId = await getAuthUserId(ctx);
     if (!userId) {
       return [];
@@ -256,90 +235,13 @@ export const getUserPosts = query({
     const posts = await query.collect();
 
     return Promise.all(
-      posts.map(async (post) => {
-        const mediaInfo = await Promise.all(
-          post.mediaIds.map(async (mediaId) => {
-            const url = await ctx.storage.getUrl(mediaId);
-            const metadata = await ctx.db.system.get(mediaId);
-            return {
-              url,
-              contentType: metadata?.contentType || "image/jpeg",
-            };
-          }),
-        );
-
+      posts.map(async (post): Promise<PostWithMedia> => {
+        const mediaInfo = await ctx.runQuery(internal.posts.processMediaInfo, {
+          mediaIds: post.mediaIds,
+        });
         return {
           ...post,
-          mediaUrls: mediaInfo.map((info) => info.url),
-          mediaTypes: mediaInfo.map((info) => info.contentType),
-        };
-      }),
-    );
-  },
-});
-
-export const getScheduledPosts = query({
-  args: {},
-  returns: v.array(
-    v.object({
-      _id: v.id("posts"),
-      _creationTime: v.number(),
-      title: v.string(),
-      content: v.string(),
-      platform: v.union(
-        v.literal("instagram"),
-        v.literal("X"),
-        v.literal("youtube"),
-        v.literal("telegram"),
-      ),
-      status: v.union(v.literal("idea"), v.literal("schedule")),
-      scheduledDate: v.optional(v.number()),
-      publishedAt: v.optional(v.number()),
-      hashtags: v.array(v.string()),
-      links: v.array(v.string()),
-      mentions: v.array(v.string()),
-      mediaIds: v.array(v.id("_storage")),
-      authorBio: v.optional(v.string()),
-      userId: v.id("users"),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      enableNotifications: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
-      reminderHours: v.optional(v.number()),
-      mediaUrls: v.array(v.union(v.string(), v.null())),
-      mediaTypes: v.array(v.string()),
-    }),
-  ),
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return [];
-    }
-
-    const posts = await ctx.db
-      .query("posts")
-      .withIndex("by_user_and_status", (q) =>
-        q.eq("userId", userId).eq("status", "schedule"),
-      )
-      .collect();
-
-    return Promise.all(
-      posts.map(async (post) => {
-        const mediaInfo = await Promise.all(
-          post.mediaIds.map(async (mediaId) => {
-            const url = await ctx.storage.getUrl(mediaId);
-            const metadata = await ctx.db.system.get(mediaId);
-            return {
-              url,
-              contentType: metadata?.contentType || "image/jpeg",
-            };
-          }),
-        );
-
-        return {
-          ...post,
-          mediaUrls: mediaInfo.map((info) => info.url),
-          mediaTypes: mediaInfo.map((info) => info.contentType),
+          ...mediaInfo,
         };
       }),
     );
@@ -376,15 +278,13 @@ export const publishPost = action({
       throw new Error("Not authenticated");
     }
 
-    const post = await ctx.runQuery(api.posts.getPostById, {
-      id: args.postId,
+    const post = await ctx.runQuery(api.posts.getPost, {
+      postId: args.postId,
     });
     if (!post || post.userId !== userId) {
       throw new Error("Post not found or unauthorized");
     }
 
-    // Здесь будет логика публикации на конкретную платформу
-    // Пока что просто обновляем статус на schedule
     await ctx.runMutation(api.posts.updatePostStatus, {
       postId: args.postId,
       status: "schedule",
@@ -461,39 +361,29 @@ export const getPlatformSpecificFields = query({
   },
 });
 
-export const getPostById = query({
-  args: { id: v.id("posts") },
-  returns: v.union(
-    v.object({
-      _id: v.id("posts"),
-      _creationTime: v.number(),
-      title: v.string(),
-      content: v.string(),
-      platform: v.union(
-        v.literal("instagram"),
-        v.literal("X"),
-        v.literal("youtube"),
-        v.literal("telegram"),
-      ),
-      status: v.union(v.literal("idea"), v.literal("schedule")),
-      scheduledDate: v.optional(v.number()),
-      publishedAt: v.optional(v.number()),
-      hashtags: v.array(v.string()),
-      links: v.array(v.string()),
-      mentions: v.array(v.string()),
-      mediaIds: v.array(v.id("_storage")),
-      authorBio: v.optional(v.string()),
-      userId: v.id("users"),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      enableNotifications: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
-      reminderHours: v.optional(v.number()),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+export const getPost = query({
+  args: { postId: v.id("posts") },
+  returns: v.union(v.any(), v.null()),
+  handler: async (ctx, args): Promise<PostWithMedia | null> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return null;
+    }
+
+    const post = await ctx.db.get(args.postId);
+    if (!post || post.userId !== userId) {
+      return null;
+    }
+
+    const mediaInfo: { mediaUrls: (string | null)[]; mediaTypes: string[] } =
+      await ctx.runQuery(internal.posts.processMediaInfo, {
+        mediaIds: post.mediaIds,
+      });
+
+    return {
+      ...post,
+      ...mediaInfo,
+    } as PostWithMedia;
   },
 });
 
@@ -517,29 +407,20 @@ export const updatePostStatus = mutation({
 export const sharePost = action({
   args: {
     email: v.string(),
-    postData: v.object({
-      title: v.optional(v.string()),
-      content: v.optional(v.string()),
-      platform: v.string(),
-      status: v.string(),
-      hashtags: v.optional(v.array(v.string())),
-      mediaUrls: v.optional(v.array(v.string())),
-    }),
+    postId: v.id("posts"),
   },
   returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
-    // Validate email
     if (!args.email || !args.email.includes("@")) {
       throw new Error("Invalid email address");
     }
 
-    // Get current user
     const userId = await getAuthUserId(ctx);
     let userEmail = "unknown@contentcreator.app";
 
     if (userId) {
       try {
-        const user = await ctx.runQuery(internal.notifications.getUserById, {
+        const user = await ctx.runQuery(internal.shared.getUserById, {
           id: userId,
         });
         if (user?.email) {
@@ -550,14 +431,61 @@ export const sharePost = action({
       }
     }
 
-    // Вызываем централизованную функцию отправки email
     await ctx.runAction(internal.sendEmails.sendShareEmail, {
       email: args.email,
-      postData: args.postData,
+      postId: args.postId,
       userEmail,
     });
 
     console.log("Shared post email sent successfully");
     return { success: true };
+  },
+});
+
+export const getPostById = internalQuery({
+  args: { id: v.id("posts") },
+  returns: v.union(v.any(), v.null()),
+  handler: async (ctx, args): Promise<Doc<"posts"> | null> => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+export const getMediaUrls = internalQuery({
+  args: { mediaIds: v.array(v.id("_storage")) },
+  returns: v.array(v.string()),
+  handler: async (ctx, args) => {
+    const urls = [];
+    for (const mediaId of args.mediaIds) {
+      const url = await ctx.storage.getUrl(mediaId);
+      if (url) {
+        urls.push(url);
+      }
+    }
+    return urls;
+  },
+});
+
+export const processMediaInfo = internalQuery({
+  args: { mediaIds: v.array(v.id("_storage")) },
+  returns: v.object({
+    mediaUrls: v.array(v.union(v.string(), v.null())),
+    mediaTypes: v.array(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const mediaInfo = await Promise.all(
+      args.mediaIds.map(async (mediaId) => {
+        const url = await ctx.storage.getUrl(mediaId);
+        const metadata = await ctx.db.system.get(mediaId);
+        return {
+          url,
+          contentType: metadata?.contentType || "image/jpeg",
+        };
+      }),
+    );
+
+    return {
+      mediaUrls: mediaInfo.map((info) => info.url),
+      mediaTypes: mediaInfo.map((info) => info.contentType),
+    };
   },
 });
