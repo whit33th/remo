@@ -1,9 +1,5 @@
 import { useQuery } from "convex-helpers/react/cache";
-import {
-  BarChart3,
-  Calendar as CalendarIcon,
-  Lightbulb
-} from "lucide-react";
+import { BarChart3, Calendar as CalendarIcon, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { SignOutButton } from "../SignOutButton";

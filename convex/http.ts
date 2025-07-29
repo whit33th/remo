@@ -2,11 +2,21 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { auth } from "./auth";
 import { internal } from "./_generated/api";
+import { resend } from "./sendEmails";
 
 const http = httpRouter();
 
 // Add auth routes
 auth.addHttpRoutes(http);
+
+// Resend webhook endpoint
+http.route({
+  path: "/resend-webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    return await resend.handleResendEventWebhook(ctx, req);
+  }),
+});
 
 // Webhook endpoint for handling scheduled post notifications
 http.route({
@@ -18,7 +28,7 @@ http.route({
 
       // Process notification webhook
       if (body.type === "scheduled_post_reminder") {
-        await ctx.runAction(internal.notifications.sendNotificationEmail, {
+        await ctx.runAction(internal.sendEmails.sendNotificationEmail, {
           notificationId: body.notificationId,
         });
       }

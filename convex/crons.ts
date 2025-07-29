@@ -1,6 +1,10 @@
 import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
-import { internalAction, internalQuery } from "./_generated/server";
+import { internal, components } from "./_generated/api";
+import {
+  internalAction,
+  internalQuery,
+  internalMutation,
+} from "./_generated/server";
 import { v } from "convex/values";
 
 // Check for overdue posts every hour
@@ -19,6 +23,13 @@ crons.cron(
   "0 9 * * *", // Every day at 9 AM
   internal.crons.sendDailyReminders,
   {},
+);
+
+// Clean up old emails from resend component every hour
+crons.interval(
+  "Remove old emails from the resend component",
+  { hours: 1 },
+  internal.crons.cleanupResend,
 );
 
 export const checkOverduePosts = internalAction({
@@ -43,8 +54,8 @@ export const checkOverduePosts = internalAction({
         },
       );
 
-      // Send email notification
-      await ctx.runAction(internal.notifications.sendNotificationEmail, {
+      // Send email notification using new sendEmails function
+      await ctx.runAction(internal.sendEmails.sendNotificationEmail, {
         notificationId,
       });
     }
@@ -148,6 +159,22 @@ export const getUsersWithNotificationsEnabled = internalQuery({
     }
 
     return users;
+  },
+});
+
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+export const cleanupResend = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.scheduler.runAfter(0, components.resend.lib.cleanupOldEmails, {
+      olderThan: ONE_WEEK_MS,
+    });
+    await ctx.scheduler.runAfter(
+      0,
+      components.resend.lib.cleanupAbandonedEmails,
+      // These generally indicate a bug, so keep them around for longer.
+      { olderThan: 4 * ONE_WEEK_MS },
+    );
   },
 });
 

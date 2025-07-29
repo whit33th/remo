@@ -9,7 +9,7 @@ import {
 } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { api, internal } from "./_generated/api";
-import { Resend } from "resend";
+import { components } from "./_generated/api";
 
 export const createPost = mutation({
   args: {
@@ -550,188 +550,14 @@ export const sharePost = action({
       }
     }
 
-    // Check if Resend API key is available
-    const resendApiKey = process.env.CONVEX_RESEND_API_KEY;
-    if (!resendApiKey) {
-      throw new Error("Email service not configured");
-    }
-
-    // Initialize Resend
-    const resend = new Resend(resendApiKey);
-
-    // Create email content
-    const emailContent = createShareEmailContent(args.postData, userEmail);
-
-    // Log email details for debugging
-    console.log("Sending email:", {
-      to: args.email,
-      from: "onboarding@resend.dev",
-      subject: `Shared Post: ${args.postData.title || "Content"}`,
+    // Вызываем централизованную функцию отправки email
+    await ctx.runAction(internal.sendEmails.sendShareEmail, {
+      email: args.email,
+      postData: args.postData,
       userEmail,
-      postData: {
-        title: args.postData.title,
-        platform: args.postData.platform,
-        status: args.postData.status,
-        hasContent: !!args.postData.content,
-        hasMedia: args.postData.mediaUrls && args.postData.mediaUrls.length > 0,
-        hashtagsCount: args.postData.hashtags
-          ? args.postData.hashtags.length
-          : 0,
-      },
     });
 
-    // Send email using Resend
-    const result = await resend.emails.send({
-      from: "onboarding@resend.dev", // Use Resend's default domain for testing
-      to: args.email,
-      subject: `Shared Post: ${args.postData.title || "Content"}`,
-      html: emailContent,
-    });
-
-    console.log("Email sent successfully:", result);
+    console.log("Shared post email sent successfully");
     return { success: true };
   },
 });
-
-function createShareEmailContent(postData: any, userEmail: string): string {
-  const platformNames = {
-    instagram: "Instagram",
-    X: "X (Twitter)",
-    youtube: "YouTube",
-    telegram: "Telegram",
-  };
-
-  const platformName =
-    platformNames[postData.platform as keyof typeof platformNames] ||
-    postData.platform;
-
-  const statusText = {
-    idea: "Idea",
-    schedule: "Schedule",
-  };
-
-  const statusColor = {
-    idea: "#9C27B0",
-    schedule: "#FF9800",
-  };
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Shared Content</title>
-    </head>
-    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-        <!-- Header -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 300; letter-spacing: 1px;">Content Shared</h1>
-          <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 16px; font-weight: 300;">Someone shared interesting content with you</p>
-        </div>
-
-        <!-- Main Content -->
-        <div style="padding: 40px 30px;">
-          <!-- Platform Info -->
-          <div style="display: flex; align-items: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border-left: 4px solid ${statusColor[postData.status as keyof typeof statusColor] || "#667eea"}">
-            <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; margin-right: 20px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-              <span style="color: white; font-size: 24px; font-weight: bold;">${platformName.charAt(0)}</span>
-            </div>
-            <div>
-              <h2 style="margin: 0; color: #2c3e50; font-size: 20px; font-weight: 600;">${platformName}</h2>
-              <p style="margin: 8px 0 0 0; color: #7f8c8d; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${statusText[postData.status as keyof typeof statusText] || "Unknown"}</p>
-            </div>
-          </div>
-
-          <!-- Title -->
-          ${postData.title ? `<h3 style="margin: 0 0 25px 0; color: #2c3e50; font-size: 24px; font-weight: 600; line-height: 1.3;">${postData.title}</h3>` : ""}
-
-          <!-- Content -->
-          ${postData.content ? `<div style="background: #f8f9fa; padding: 25px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #667eea;"><p style="margin: 0; color: #34495e; line-height: 1.7; font-size: 16px; font-weight: 400;">${postData.content}</p></div>` : ""}
-
-          <!-- Media Files -->
-          ${
-            postData.mediaUrls && postData.mediaUrls.length > 0
-              ? `
-            <div style="margin-bottom: 30px;">
-              <h4 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 18px; font-weight: 600;">Media Files (${postData.mediaUrls.length})</h4>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
-                ${postData.mediaUrls
-                  .slice(0, 6)
-                  .map(
-                    (url: string, index: number) => `
-                  <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; padding: 20px; text-align: center; border: 2px solid #e9ecef; transition: all 0.3s ease;">
-                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
-                      <span style="color: white; font-size: 16px; font-weight: bold;">${index + 1}</span>
-                    </div>
-                    <p style="margin: 0; color: #7f8c8d; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Media File</p>
-                  </div>
-                `,
-                  )
-                  .join("")}
-                ${
-                  postData.mediaUrls.length > 6
-                    ? `
-                  <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; padding: 20px; text-align: center; border: 2px solid #e9ecef;">
-                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
-                      <span style="color: white; font-size: 16px; font-weight: bold;">+</span>
-                    </div>
-                    <p style="margin: 0; color: #7f8c8d; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${postData.mediaUrls.length - 6} More</p>
-                  </div>
-                `
-                    : ""
-                }
-              </div>
-            </div>
-          `
-              : ""
-          }
-
-          <!-- Hashtags -->
-          ${
-            postData.hashtags && postData.hashtags.length > 0
-              ? `
-            <div style="margin-bottom: 30px;">
-              <h4 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 18px; font-weight: 600;">Hashtags</h4>
-              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                ${postData.hashtags
-                  .map(
-                    (tag: string) => `
-                  <span style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); color: #1976d2; padding: 8px 16px; border-radius: 25px; font-size: 13px; font-weight: 600; border: 1px solid #e3f2fd; box-shadow: 0 2px 4px rgba(25, 118, 210, 0.1);">
-                    #${tag}
-                  </span>
-                `,
-                  )
-                  .join("")}
-              </div>
-            </div>
-          `
-              : ""
-          }
-
-          <!-- Creation Date -->
-          <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 12px; border-left: 4px solid #667eea;">
-            <p style="margin: 0; color: #7f8c8d; font-size: 14px; font-weight: 500;">
-              <strong style="color: #2c3e50;">Created:</strong> ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} at ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}
-            </p>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div style="background: #2c3e50; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
-          <p style="color: #bdc3c7; font-size: 14px; margin: 0 0 10px 0; font-weight: 300;">
-            This email was sent via Content Creator Assistant
-          </p>
-          <p style="color: #95a5a6; font-size: 12px; margin: 0 0 10px 0; font-weight: 300;">
-            Shared by: ${userEmail}
-          </p>
-          <p style="color: #95a5a6; font-size: 12px; margin: 0; font-weight: 300;">
-            If you didn't expect this email, please ignore it
-          </p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
