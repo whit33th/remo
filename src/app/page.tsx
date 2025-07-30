@@ -1,15 +1,95 @@
 "use client";
 
 import { Authenticated, Unauthenticated } from "convex/react";
-import { SignInForm } from "@/components/SignInForm";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { Calendar } from "@/components/Calendar";
+import { Header } from "@/components/Header";
 import { MainFeed } from "@/components/MainFeed";
+import { NoteEditor } from "@/components/NoteEditor";
+import { Profile } from "@/components/Profile";
+import { SignInForm } from "@/components/SignInForm";
+import { api } from "@/convex/_generated/api";
+import { Platform, ViewType } from "@/types";
+import { useQuery } from "convex/react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 
-export default function HomePage() {
+interface AppLayoutProps {
+  children: React.ReactNode;
+}
+
+function AppLayout({ children }: AppLayoutProps) {
+  const user = useQuery(api.auth.loggedInUser);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(
+    null,
+  );
+
+  const [currentView, setCurrentView] = useState<ViewType>("feed");
+
+  const isNotePage = pathname.includes("/note/");
+
+  const notes = useQuery(api.notes.getUserNotes, {
+    platform: selectedPlatform || undefined,
+  });
+
+  const handleViewNote = (noteId: string) => {
+    router.push(`/note/${noteId}`);
+  };
+
+  const handleViewChange = (view: ViewType) => {
+    setCurrentView(view);
+  };
+
+  const handlePlatformChange = (platform: Platform | null) => {
+    setSelectedPlatform(platform);
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <Authenticated>
-        <MainFeed />
+        <Header user={user || {}} />
+        <main className={"pb-20"}>
+          {isNotePage ? (
+            children
+          ) : (
+            <>
+              {currentView === "feed" && (
+                <MainFeed
+                  selectedPlatform={selectedPlatform}
+                  onPlatformChange={handlePlatformChange}
+                />
+              )}
+
+              {currentView === "calendar" && (
+                <Calendar
+                  notes={notes || []}
+                  selectedPlatform={selectedPlatform}
+                  onEditNote={handleViewNote}
+                  onPlatformChange={handlePlatformChange}
+                />
+              )}
+
+              {currentView === "profile" && <Profile />}
+
+              {currentView === "create" && (
+                <NoteEditor
+                  noteId="new"
+                  onClose={() => setCurrentView("feed")}
+                />
+              )}
+            </>
+          )}
+        </main>
+
+        <BottomNavigation
+          currentView={currentView}
+          onViewChange={handleViewChange}
+        />
       </Authenticated>
+
       <Unauthenticated>
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-neutral-900 bg-black/80 px-4 text-neutral-300 shadow-sm backdrop-blur-sm">
@@ -32,4 +112,8 @@ export default function HomePage() {
       </Unauthenticated>
     </div>
   );
+}
+
+export default function Page() {
+  return <AppLayout>{null}</AppLayout>;
 }
