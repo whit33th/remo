@@ -37,7 +37,7 @@ export function PlatformNavigation({
   return (
     <div>
       <h3 className="mb-4 text-sm font-medium uppercase tracking-wide text-neutral-200">
-        Платформы
+        Platforms
       </h3>
       <div className="mb-4 flex flex-wrap gap-3">
         <button
@@ -67,7 +67,7 @@ export function PlatformNavigation({
       </div>
       {selectedPlatform && (
         <div className="mb-4 text-sm text-gray-600">
-          Фокус: {platforms.find((p) => p.id === selectedPlatform)?.name}
+          Focus: {platforms.find((p) => p.id === selectedPlatform)?.name}
         </div>
       )}
     </div>

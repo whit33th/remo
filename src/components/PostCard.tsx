@@ -56,7 +56,7 @@ export function PostCard({ post, onEdit }: PostCardProps) {
   return (
     <>
       <Link
-        href={`/post/${post._id}`}
+        href={`/note/${post._id}`}
         prefetch={true}
         className="cursor-pointer bg-black transition-transform hover:scale-[1.02]"
       >
@@ -148,7 +148,7 @@ export function PostCard({ post, onEdit }: PostCardProps) {
           <div className="flex justify-between pt-2">
             {post.scheduledDate && (
               <span className="text-xs text-neutral-700">
-                {new Date(post.scheduledDate).toLocaleDateString("ru-RU")}
+                {new Date(post.scheduledDate).toLocaleDateString("en-US")}
               </span>
             )}
             <button

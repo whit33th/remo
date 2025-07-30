@@ -1,43 +1,42 @@
 "use client";
 
+import { ViewType } from "@/types";
 import { Calendar, Home, Plus, User } from "lucide-react";
 
 interface BottomNavigationProps {
-  currentView: "feed" | "calendar" | "create" | "profile";
-  onViewChange: (view: "feed" | "calendar" | "create" | "profile") => void;
-  onCreatePost: () => void;
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
 }
 
 export function BottomNavigation({
   currentView,
   onViewChange,
-  onCreatePost,
 }: BottomNavigationProps) {
   const navItems = [
     {
-      id: "feed" as const,
+      id: "feed" as ViewType,
       icon: <Home />,
       label: "Feed",
     },
     {
-      id: "calendar" as const,
+      id: "calendar" as ViewType,
       icon: <Calendar />,
       label: "Calendar",
     },
     {
-      id: "create" as const,
+      id: "create" as ViewType,
       icon: <Plus />,
-      label: "Create",
+      label: "New Note",
     },
     {
-      id: "profile" as const,
+      id: "profile" as ViewType,
       icon: <User />,
       label: "Profile",
     },
   ];
 
-  const handleNavClick = (id: string) => {
-    onViewChange(id as "feed" | "calendar" | "create" | "profile");
+  const handleNavClick = (id: ViewType) => {
+    onViewChange(id);
   };
 
   return (

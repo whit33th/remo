@@ -317,7 +317,7 @@ export const getPlatformSpecificFields = query({
     const fields = {
       instagram: {
         required: ["content"],
-        optional: ["hashtags", "location", "story", "reels", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
         maxContentLength: 2200,
         maxHashtags: 30,
         mediaTypes: ["image", "video"],
@@ -325,7 +325,7 @@ export const getPlatformSpecificFields = query({
       },
       X: {
         required: ["content"],
-        optional: ["hashtags", "mentions", "poll", "thread", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
         maxContentLength: 280,
         maxHashtags: 10,
         mediaTypes: ["image", "video"],
@@ -333,14 +333,7 @@ export const getPlatformSpecificFields = query({
       },
       youtube: {
         required: ["title", "content"],
-        optional: [
-          "hashtags",
-          "category",
-          "privacy",
-          "thumbnail",
-          "timestamps",
-          "mediaIds",
-        ],
+        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
         maxTitleLength: 100,
         maxContentLength: 5000,
         maxHashtags: 15,
@@ -349,7 +342,7 @@ export const getPlatformSpecificFields = query({
       },
       telegram: {
         required: ["content"],
-        optional: ["hashtags", "mentions", "buttons", "poll", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
         maxContentLength: 4096,
         maxHashtags: 20,
         mediaTypes: ["image", "video", "document"],

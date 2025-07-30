@@ -28,7 +28,7 @@ export function YouTubeCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/post/${post._id}`}
+        href={`/note/${post._id}`}
         prefetch={true}
         className="cursor-pointer overflow-hidden rounded-lg bg-black transition-transform hover:scale-[1.02]"
       >

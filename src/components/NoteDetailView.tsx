@@ -76,7 +76,7 @@ export function NoteDetailView({ post, onBack }: NoteDetailViewProps) {
   };
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString("ru-RU", {
+    return new Date(timestamp).toLocaleString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",

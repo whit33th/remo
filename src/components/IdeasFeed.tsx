@@ -36,14 +36,14 @@ export function IdeasFeed({
         return (
           <div className="flex items-center space-x-1">
             <Lightbulb className="h-3 w-3 text-yellow-500" />
-            <span className="text-xs text-neutral-200">Идея</span>
+            <span className="text-xs text-neutral-200">Idea</span>
           </div>
         );
       case "schedule":
         return (
           <div className="flex items-center space-x-1">
             <Calendar className="h-3 w-3 text-green-500" />
-            <span className="text-xs text-neutral-200">Запланировано</span>
+            <span className="text-xs text-neutral-200">Scheduled</span>
           </div>
         );
       case "draft":
@@ -52,14 +52,14 @@ export function IdeasFeed({
         return (
           <div className="flex items-center space-x-1">
             <Calendar className="h-3 w-3 text-green-500" />
-            <span className="text-xs text-neutral-200">Запланировано</span>
+            <span className="text-xs text-neutral-200">Scheduled</span>
           </div>
         );
       default:
         return (
           <div className="flex items-center space-x-1">
             <Lightbulb className="h-3 w-3 text-yellow-500" />
-            <span className="text-xs text-neutral-200">Идея</span>
+            <span className="text-xs text-neutral-200">Idea</span>
           </div>
         );
     }
@@ -81,7 +81,7 @@ export function IdeasFeed({
   return (
     <div>
       <h3 className="mb-4 text-sm font-medium uppercase tracking-wide text-neutral-200">
-        Лента идей
+        Ideas Feed
       </h3>
       <div className="max-h-96 space-y-3 overflow-y-auto">
         {filteredPosts.slice(0, 10).map((post) => (
@@ -99,7 +99,7 @@ export function IdeasFeed({
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between">
                   <h4 className="truncate text-sm font-medium text-neutral-100">
-                    {post.title || "Без названия"}
+                    {post.title || "Untitled"}
                   </h4>
                   <div className="text-xs text-neutral-200">
                     {renderStatus(post.status)}
@@ -137,7 +137,7 @@ export function IdeasFeed({
                       <Calendar className="h-3 w-3" />
                       <span>
                         {new Date(post.scheduledDate).toLocaleDateString(
-                          "ru-RU",
+                          "en-US",
                         )}
                       </span>
                     </div>
@@ -149,8 +149,8 @@ export function IdeasFeed({
         ))}
         {filteredPosts.length === 0 && (
           <div className="py-8 text-center text-neutral-200">
-            <p className="text-sm">Пока нет идей</p>
-            <p className="mt-1 text-xs">Создайте свою первую идею!</p>
+            <p className="text-sm">No ideas yet</p>
+            <p className="mt-1 text-xs">Create your first idea!</p>
           </div>
         )}
       </div>

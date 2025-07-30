@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { useState, useEffect } from "react";
 import { Button } from "@/ui/Button";
 import { Clock, Bell, BellOff, Settings, User } from "lucide-react";
+import { toast } from "sonner";
 
 export function Profile() {
   const user = useQuery(api.auth.loggedInUser);
@@ -16,7 +17,6 @@ export function Profile() {
 
   useEffect(() => {
     if (user) {
-      // Load user settings
       setNotificationTime(user.notificationTime || "09:00");
       setNotificationsEnabled(user.notificationsEnabled !== false);
     }
@@ -31,10 +31,10 @@ export function Profile() {
         notificationTime,
         notificationsEnabled,
       });
-      alert("Settings saved!");
+      toast.success("Settings saved!");
     } catch (error) {
       console.error("Failed to save settings:", error);
-      alert("Error saving settings");
+      toast.error("Error saving settings");
     } finally {
       setIsLoading(false);
     }

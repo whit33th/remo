@@ -45,7 +45,7 @@ export const checkOverduePosts = internalAction({
           userId: post.userId,
           postId: post._id,
           type: "overdue",
-          message: `🚨 Пост "${post.title}" просрочен! Запланированная дата публикации: ${new Date(post.scheduledDate!).toLocaleDateString("ru-RU")}`,
+          message: `🚨 Post "${post.title}" is overdue! Scheduled publication date: ${new Date(post.scheduledDate!).toLocaleDateString("en-US")}`,
           scheduledFor: now,
         },
       );
@@ -70,13 +70,11 @@ export const sendDailyReminders = internalAction({
     for (const user of usersWithNotifications) {
       const notificationTime = user.notificationTime || "09:00";
 
-      // Создаем ежедневное уведомление для пользователя
       await ctx.runMutation(internal.notifications.createInternalNotification, {
         userId: user._id,
-        postId: "daily" as any, // Используем специальный ID для ежедневных уведомлений
+        postId: "daily" as any,
         type: "daily",
-        message:
-          "Ежедневное напоминание: проверьте ваши запланированные посты и идеи",
+        message: "Daily reminder: check your scheduled posts and ideas",
         scheduledFor: Date.now(),
       });
     }
@@ -147,7 +145,6 @@ export const getUsersWithNotificationsEnabled = internalQuery({
     }),
   ),
   handler: async (ctx) => {
-    // Получаем всех пользователей с включенными уведомлениями
     const users = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("notificationsEnabled"), true))

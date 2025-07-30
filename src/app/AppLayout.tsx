@@ -1,14 +1,15 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Header } from "@/components/Header";
 import { BottomNavigation } from "@/components/BottomNavigation";
-import { PostEditor } from "@/components/PostEditor";
-import { MainFeed } from "@/components/MainFeed";
 import { Calendar } from "@/components/Calendar";
-import { Analytics } from "@/components/Analytics";
-import { useRouter, usePathname } from "next/navigation";
+import { Header } from "@/components/Header";
+import { MainFeed } from "@/components/MainFeed";
+import { NoteEditor } from "@/components/NoteEditor";
+import { Profile } from "@/components/Profile";
+import { api } from "@/convex/_generated/api";
+import { Platform, ViewType } from "@/types";
+import { useQuery } from "convex/react";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface AppLayoutProps {
@@ -20,33 +21,27 @@ export function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [selectedPlatform, setSelectedPlatform] = useState<
-    "instagram" | "X" | "youtube" | "telegram" | null
-  >(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(
+    null,
+  );
 
-  const [currentView, setCurrentView] = useState<
-    "feed" | "calendar" | "create" | "profile"
-  >("feed");
+  const [currentView, setCurrentView] = useState<ViewType>("feed");
 
-  const isPostPage = pathname.includes("/post/");
+  const isNotePage = pathname.includes("/note/");
 
   const posts = useQuery(api.posts.getUserPosts, {
     platform: selectedPlatform || undefined,
   });
 
-  const handleViewPost = (postId: string) => {
-    router.push(`/post/${postId}`);
+  const handleViewNote = (noteId: string) => {
+    router.push(`/note/${noteId}`);
   };
 
-  const handleViewChange = (
-    view: "feed" | "calendar" | "create" | "profile",
-  ) => {
+  const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
   };
 
-  const handlePlatformChange = (
-    platform: "instagram" | "X" | "youtube" | "telegram" | null,
-  ) => {
+  const handlePlatformChange = (platform: Platform | null) => {
     setSelectedPlatform(platform);
   };
 
@@ -58,7 +53,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-black">
       <Header user={user} />
       <main className={"pb-20"}>
-        {isPostPage ? (
+        {isNotePage ? (
           children
         ) : (
           <>
@@ -73,15 +68,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Calendar
                 posts={posts || []}
                 selectedPlatform={selectedPlatform}
-                onEditPost={handleViewPost}
+                onEditPost={handleViewNote}
                 onPlatformChange={handlePlatformChange}
               />
             )}
 
-            {currentView === "profile" && <Analytics />}
+            {currentView === "profile" && <Profile />}
 
             {currentView === "create" && (
-              <PostEditor postId="new" onClose={() => setCurrentView("feed")} />
+              <NoteEditor noteId="new" onClose={() => setCurrentView("feed")} />
             )}
           </>
         )}
@@ -90,7 +85,6 @@ export function AppLayout({ children }: AppLayoutProps) {
       <BottomNavigation
         currentView={currentView}
         onViewChange={handleViewChange}
-        onCreatePost={() => setCurrentView("create")}
       />
     </div>
   );

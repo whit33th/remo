@@ -99,7 +99,7 @@ export const sendDailyReminder = internalAction({
       await resend.sendEmail(ctx, {
         from: "Content Creator Assistant <notifications@resend.dev>",
         to: user.email,
-        subject: "📋 Ежедневный отчет по контенту",
+        subject: "📋 Daily Content Report",
         html: getDailyReminderContent(posts),
       });
 
@@ -330,7 +330,7 @@ function getEmailContent(
               post.scheduledDate
                 ? `
               <span style="font-size: 12px; color: #999999;">
-                ${new Date(post.scheduledDate).toLocaleDateString("ru-RU")}
+                ${new Date(post.scheduledDate).toLocaleDateString("en-US")}
               </span>
             `
                 : ""
@@ -445,7 +445,7 @@ function getDailyReminderContent(posts: any[]): string {
               <!-- Footer -->
               <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px;">
                 <span style="font-size: 11px; color: #999999;">
-                  🕐 ${new Date(post.scheduledDate).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+                  🕐 ${new Date(post.scheduledDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                 </span>
                 <div style="display: flex; align-items: center; gap: 3px; color: #cccccc;">
                   <span style="font-size: 11px;">${getPlatformName(post.platform)}</span>
@@ -633,7 +633,7 @@ export function createShareEmailContent(
               postData.scheduledDate
                 ? `
               <span style="font-size: 12px; color: #999999;">
-                ${new Date(postData.scheduledDate).toLocaleDateString("ru-RU")}
+                ${new Date(postData.scheduledDate).toLocaleDateString("en-US")}
               </span>
             `
                 : ""

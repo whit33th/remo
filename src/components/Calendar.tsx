@@ -19,7 +19,7 @@ interface Post {
 interface CalendarProps {
   posts: Post[];
   selectedPlatform: "instagram" | "X" | "youtube" | "telegram" | null;
-  onEditPost: (postId: string) => void; // Это теперь onViewPost, но оставляем для совместимости
+  onEditPost: (postId: string) => void;
   onPlatformChange?: (platform: Platform | null) => void;
 }
 
@@ -111,7 +111,7 @@ export function Calendar({
     "December",
   ];
 
-  const weekDays = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const isIdeaStatus = (status: string) => {
     return status === "idea" || status === "draft";

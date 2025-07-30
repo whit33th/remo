@@ -28,7 +28,7 @@ export function TelegramCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/post/${post._id}`}
+        href={`/note/${post._id}`}
         prefetch={true}
         className="cursor-pointer rounded-lg p-4"
       >

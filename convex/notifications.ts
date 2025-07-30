@@ -88,7 +88,7 @@ export const schedulePostNotifications = internalAction({
         userId: post.userId,
         postId: post._id,
         type: "deadline",
-        message: `📅 Приближается дедлайн публикации поста "${post.title}" на ${getPlatformName(post.platform)}`,
+        message: `📅 Deadline approaching for post "${post.title}" on ${getPlatformName(post.platform)}`,
         scheduledFor: args.scheduledDate,
       },
     );
@@ -110,7 +110,7 @@ export const schedulePostNotifications = internalAction({
           userId: post.userId,
           postId: post._id,
           type: "reminder",
-          message: `⏰ Напоминание: через ${args.reminderHours} часов нужно опубликовать пост "${post.title}" на ${getPlatformName(post.platform)}`,
+          message: `⏰ Reminder: post "${post.title}" needs to be published in ${args.reminderHours} hours on ${getPlatformName(post.platform)}`,
           scheduledFor: reminderTime,
         },
       );
@@ -130,7 +130,7 @@ export const schedulePostNotifications = internalAction({
         userId: post.userId,
         postId: post._id,
         type: "published",
-        message: `🎉 Пост "${post.title}" успешно опубликован на ${getPlatformName(post.platform)}!`,
+        message: `🎉 Post "${post.title}" successfully published on ${getPlatformName(post.platform)}!`,
         scheduledFor: args.scheduledDate + 5 * 60 * 1000,
       },
     );
@@ -194,7 +194,7 @@ export const scheduleDailyReminders = internalAction({
         userId: args.userId,
         postId: posts[0]._id,
         type: "daily",
-        message: `📋 Ежедневный отчет: У вас ${posts.length} активных постов в работе`,
+        message: `📋 Daily report: You have ${posts.length} active posts in progress`,
         scheduledFor: nextReminder.getTime(),
       },
     );

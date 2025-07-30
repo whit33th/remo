@@ -3,7 +3,6 @@
 import { Edit } from "lucide-react";
 import { GRID_LAYOUTS } from "../constants";
 import { ContentFeedProps, Id } from "../types";
-import { Analytics } from "./Analytics";
 import { Calendar } from "./Calendar";
 import {
   InstagramCard,
@@ -28,10 +27,6 @@ export function ContentFeed({
         onEditPost={(postId: string) => onEditPost(postId as Id<"posts">)}
       />
     );
-  }
-
-  if (currentView === "profile") {
-    return <Analytics />;
   }
 
   const sortedPosts = [...posts].sort((a, b) => {

@@ -28,7 +28,7 @@ export function InstagramCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/post/${post._id}`}
+        href={`/note/${post._id}`}
         prefetch={true}
         className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-neutral-950/20 bg-black transition-transform"
       >
