@@ -8,6 +8,7 @@ import { SocialIcon } from "../../../ui/SocialIcons";
 import { ShareModal } from "../../ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Edit } from "lucide-react";
 
 export function TelegramCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -50,13 +51,7 @@ export function TelegramCard({ note, onEdit }: CardProps) {
                   }}
                   className="z-10 text-gray-400 transition-colors hover:text-gray-600"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
+                  <Edit className="h-4 w-4" />
                 </button>
               </div>
             </div>

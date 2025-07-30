@@ -8,6 +8,7 @@ import { SocialIcon } from "../../../ui/SocialIcons";
 import { ShareModal } from "../../ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Edit } from "lucide-react";
 
 export function InstagramCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -68,9 +69,7 @@ export function InstagramCard({ note, onEdit }: CardProps) {
               }}
               className="z-10 text-gray-400 transition-colors hover:text-gray-600"
             >
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
+              <Edit className="h-4 w-4" />
             </button>
           </div>
           {note.content && (
@@ -100,19 +99,7 @@ export function InstagramCard({ note, onEdit }: CardProps) {
                 }}
                 className="z-10 text-gray-400 transition-colors hover:text-gray-600"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-                  />
-                </svg>
+                <Edit className="h-4 w-4" />
               </button>
             </div>
           </div>
