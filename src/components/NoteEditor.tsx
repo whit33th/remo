@@ -1,10 +1,11 @@
 "use client";
 
-import { useAction, useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
 import {
   AtSign,
   Calendar,
-  Clock,
   FileText,
   Hash,
   Image as ImageIcon,
@@ -19,8 +20,6 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { PlatformIcon } from "./PlatformIcons";
 
 interface NoteEditorProps {
@@ -58,7 +57,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
   const createPost = useMutation(api.notes.createNote);
   const updatePost = useMutation(api.notes.updateNote);
   const deletePost = useMutation(api.notes.deleteNote);
-  const publishPost = useAction(api.notes.publishNote);
   const generateUploadUrl = useMutation(api.notes.generateUploadUrl);
 
   const platformFields = useQuery(api.notes.getPlatformSpecificFields, {

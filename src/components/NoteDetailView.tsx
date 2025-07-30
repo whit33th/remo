@@ -1,29 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { api } from "@/convex/_generated/api";
+import { NoteWithMediaUrls } from "@/types";
+import { useAction } from "convex/react";
 import {
   ArrowLeft,
-  Edit,
-  Share2,
-  Calendar,
-  Clock,
-  Hash,
-  Link,
   AtSign,
-  User,
   Bell,
-  FileText,
-  X,
+  Calendar,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  Edit,
+  FileText,
+  Link,
+  Share2,
+  User,
+  X,
 } from "lucide-react";
-import { NoteWithMediaUrls } from "@/types";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { SocialIcon } from "../ui/SocialIcons";
 import { ShareModal } from "./ShareModal";
-import { useAction } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useRouter } from "next/navigation";
 
 interface NoteDetailViewProps {
   note: NoteWithMediaUrls;

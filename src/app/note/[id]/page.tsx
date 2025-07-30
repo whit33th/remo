@@ -3,10 +3,9 @@
 import { useParams, useRouter } from "next/navigation";
 
 import { api } from "@/convex/_generated/api";
-import { NoteDetailView } from "../../../components/NoteDetailView";
-import { Header } from "@/components/Header";
-import { useQuery } from "convex-helpers/react/cache";
 import { Id } from "@/types";
+import { useQuery } from "convex-helpers/react/cache";
+import { NoteDetailView } from "../../../components/NoteDetailView";
 
 export default function NotePage() {
   const params = useParams();

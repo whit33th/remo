@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "convex-helpers/react/cache";
 import { api } from "@/convex/_generated/api";
-import { PlatformSwiper } from "./PlatformSwiper";
+import { Platform, ViewType } from "@/types";
+import { useQuery } from "convex-helpers/react/cache";
+import { useState } from "react";
 import { ContentFeed } from "./ContentFeed";
 import { NoteEditor } from "./NoteEditor";
-import { Platform, ViewType } from "@/types";
+import { PlatformSwiper } from "./PlatformSwiper";
 
 interface MainFeedProps {
   selectedPlatform?: Platform | null;
@@ -19,7 +19,7 @@ export function MainFeed({
 }: MainFeedProps) {
   const [internalSelectedPlatform, setInternalSelectedPlatform] =
     useState<Platform | null>(null);
-  const [currentView, setCurrentView] = useState<ViewType>("feed");
+  const [currentView] = useState<ViewType>("feed");
   const [editingNote, setEditingNote] = useState<string | null>(null);
 
   const selectedPlatform =
