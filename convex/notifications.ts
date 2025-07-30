@@ -14,7 +14,7 @@ import { getPlatformName } from "./shared";
 
 export const createNotification = mutation({
   args: {
-    postId: v.id("posts"),
+    noteId: v.id("notes"),
     type: v.union(
       v.literal("deadline"),
       v.literal("reminder"),
@@ -57,25 +57,25 @@ export const getUserNotifications = query({
   },
 });
 
-export const schedulePostNotifications = internalAction({
+export const scheduleNoteNotifications = internalAction({
   args: {
-    postId: v.id("posts"),
+    noteId: v.id("notes"),
     scheduledDate: v.number(),
     reminderHours: v.number(),
     notificationTime: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const post = await ctx.runQuery(internal.posts.getPostById, {
-      id: args.postId,
+    const note = await ctx.runQuery(internal.notes.getNoteById, {
+      id: args.noteId,
     });
 
-    if (!post) {
+    if (!note) {
       return null;
     }
 
     const user = await ctx.runQuery(internal.shared.getUserById, {
-      id: post.userId,
+      id: note.userId,
     });
 
     if (!user?.email) {
@@ -85,10 +85,10 @@ export const schedulePostNotifications = internalAction({
     const deadlineNotificationId = await ctx.runMutation(
       internal.notifications.createInternalNotification,
       {
-        userId: post.userId,
-        postId: post._id,
+        userId: note.userId,
+        noteId: note._id,
         type: "deadline",
-        message: `📅 Deadline approaching for post "${post.title}" on ${getPlatformName(post.platform)}`,
+        message: `📅 Deadline approaching for note "${note.title}" on ${getPlatformName(note.platform)}`,
         scheduledFor: args.scheduledDate,
       },
     );
@@ -107,10 +107,10 @@ export const schedulePostNotifications = internalAction({
       const reminderNotificationId = await ctx.runMutation(
         internal.notifications.createInternalNotification,
         {
-          userId: post.userId,
-          postId: post._id,
+          userId: note.userId,
+          noteId: note._id,
           type: "reminder",
-          message: `⏰ Reminder: post "${post.title}" needs to be published in ${args.reminderHours} hours on ${getPlatformName(post.platform)}`,
+          message: `⏰ Reminder: note "${note.title}" needs to be published in ${args.reminderHours} hours on ${getPlatformName(note.platform)}`,
           scheduledFor: reminderTime,
         },
       );
@@ -127,10 +127,10 @@ export const schedulePostNotifications = internalAction({
     const publicationNotificationId = await ctx.runMutation(
       internal.notifications.createInternalNotification,
       {
-        userId: post.userId,
-        postId: post._id,
+        userId: note.userId,
+        noteId: note._id,
         type: "published",
-        message: `🎉 Post "${post.title}" successfully published on ${getPlatformName(post.platform)}!`,
+        message: `🎉 Note "${note.title}" successfully published on ${getPlatformName(note.platform)}!`,
         scheduledFor: args.scheduledDate + 5 * 60 * 1000,
       },
     );
@@ -147,7 +147,7 @@ export const schedulePostNotifications = internalAction({
       0,
       internal.notifications.scheduleDailyReminders,
       {
-        userId: post.userId,
+        userId: note.userId,
         notificationTime: args.notificationTime,
       },
     );
@@ -171,11 +171,11 @@ export const scheduleDailyReminders = internalAction({
       return null;
     }
 
-    const posts = await ctx.runQuery(internal.shared.getUserPostsForReminders, {
+    const notes = await ctx.runQuery(internal.shared.getUserNotesForReminders, {
       userId: args.userId,
     });
 
-    if (posts.length === 0) {
+    if (notes.length === 0) {
       return null;
     }
 
@@ -192,9 +192,9 @@ export const scheduleDailyReminders = internalAction({
       internal.notifications.createInternalNotification,
       {
         userId: args.userId,
-        postId: posts[0]._id,
+        noteId: notes[0]._id,
         type: "daily",
-        message: `📋 Daily report: You have ${posts.length} active posts in progress`,
+        message: `📋 Daily report: You have ${notes.length} active notes in progress`,
         scheduledFor: nextReminder.getTime(),
       },
     );
@@ -215,7 +215,7 @@ export const scheduleDailyReminders = internalAction({
 export const createInternalNotification = internalMutation({
   args: {
     userId: v.id("users"),
-    postId: v.id("posts"),
+    noteId: v.id("notes"),
     type: v.union(
       v.literal("deadline"),
       v.literal("reminder"),

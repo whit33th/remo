@@ -29,7 +29,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const isNotePage = pathname.includes("/note/");
 
-  const posts = useQuery(api.posts.getUserPosts, {
+  const notes = useQuery(api.notes.getUserNotes, {
     platform: selectedPlatform || undefined,
   });
 
@@ -66,9 +66,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {currentView === "calendar" && (
               <Calendar
-                posts={posts || []}
+                notes={notes || []}
                 selectedPlatform={selectedPlatform}
-                onEditPost={handleViewNote}
+                onEditNote={handleViewNote}
                 onPlatformChange={handlePlatformChange}
               />
             )}

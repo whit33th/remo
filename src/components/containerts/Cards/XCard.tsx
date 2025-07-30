@@ -9,18 +9,18 @@ import { ShareModal } from "../../ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-export function XCard({ post, onEdit }: CardProps) {
+export function XCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const sharePost = useAction(api.posts.sharePost);
+  const shareNote = useAction(api.notes.shareNote);
 
   const handleShare = async (email: string) => {
     try {
-      await sharePost({
+      await shareNote({
         email,
-        postId: post._id,
+        noteId: note._id,
       });
     } catch (error) {
-      console.error("Error sharing post:", error);
+      console.error("Error sharing note:", error);
       throw error;
     }
   };
@@ -28,7 +28,7 @@ export function XCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/note/${post._id}`}
+        href={`/note/${note._id}`}
         prefetch={true}
         className="cursor-pointer rounded-lg p-4"
       >
@@ -40,10 +40,10 @@ export function XCard({ post, onEdit }: CardProps) {
             <div className="mb-1 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="font-semibold text-neutral-100">
-                  {post.title}
+                  {note.title}
                 </span>
                 <span className="text-sm text-gray-600">
-                  {post.mentions?.map((p, index) => (
+                  {note.mentions?.map((p, index) => (
                     <span key={index}>@{p}</span>
                   ))}
                 </span>
@@ -52,7 +52,7 @@ export function XCard({ post, onEdit }: CardProps) {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onEdit(post._id);
+                  onEdit(note._id);
                 }}
                 className="z-10 text-gray-400 transition-colors hover:text-gray-600"
               >
@@ -65,25 +65,26 @@ export function XCard({ post, onEdit }: CardProps) {
                 </svg>
               </button>
             </div>
-            {post.content && (
+            {note.content && (
               <p className="mb-2 leading-relaxed text-neutral-100">
-                {post.content}
+                {note.content}
               </p>
             )}
-            {post.mediaUrls && post.mediaUrls.length > 0 && (
-              <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-lg">
-                <Image
-                  src={post.mediaUrls[0] || ""}
-                  alt="Post media"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
+            {note.mediaUrls &&
+              note.mediaUrls.filter((url) => url !== null).length > 0 && (
+                <div className="relative mb-3 aspect-video w-full overflow-hidden rounded-lg">
+                  <Image
+                    src={note.mediaUrls.filter((url) => url !== null)[0] || ""}
+                    alt="Note media"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
                 <span>
-                  {new Date(post._creationTime).toLocaleDateString("ru-RU")}
+                  {new Date(note._creationTime).toLocaleDateString("en-US")}
                 </span>
               </div>
               <button
@@ -113,11 +114,10 @@ export function XCard({ post, onEdit }: CardProps) {
         </div>
       </Link>
 
-      {/* Share Modal - rendered outside of Link */}
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        post={post}
+        note={note}
         onShare={handleShare}
       />
     </>

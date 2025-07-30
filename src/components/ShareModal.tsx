@@ -3,19 +3,19 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Toast } from "./Toast";
-import { Post } from "@/types";
+import { Note } from "@/types";
 
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  post: Post;
+  note: Note;
   onShare: (email: string) => void;
 }
 
 export function ShareModal({
   isOpen,
   onClose,
-  post,
+  note,
   onShare,
 }: ShareModalProps) {
   const [email, setEmail] = useState("");
@@ -42,14 +42,14 @@ export function ShareModal({
       setEmail("");
       onClose();
       setToast({
-        message: "Post sent successfully!",
+        message: "Note sent successfully!",
         type: "success",
         isVisible: true,
       });
     } catch (error) {
-      console.error("Error sharing post:", error);
+      console.error("Error sharing note:", error);
       const errorMessage =
-        error instanceof Error ? error.message : "Error sending post";
+        error instanceof Error ? error.message : "Error sending note";
       setToast({
         message: errorMessage,
         type: "error",
@@ -70,7 +70,7 @@ export function ShareModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-neutral-100">Share post</h3>
+          <h3 className="text-lg font-semibold text-neutral-100">Share note</h3>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -91,12 +91,12 @@ export function ShareModal({
               C
             </div>
             <span className="text-sm font-medium text-neutral-100">
-              {post.title || "Post"}
+              {note.title || "Note"}
             </span>
           </div>
-          {post.content && (
+          {note.content && (
             <p className="line-clamp-2 text-sm text-neutral-300">
-              {post.content}
+              {note.content}
             </p>
           )}
         </div>
@@ -148,7 +148,6 @@ export function ShareModal({
         </form>
       </div>
 
-      {/* Toast Notification */}
       <Toast
         message={toast.message}
         type={toast.type}

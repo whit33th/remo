@@ -3,18 +3,18 @@
 import { useParams, useRouter } from "next/navigation";
 import { NoteEditor } from "@/components/NoteEditor";
 
-export default function EditPostPage() {
+export default function EditNotePage() {
   const params = useParams();
   const router = useRouter();
-  const postId = params.id as string;
+  const noteId = params.id as string;
 
   const handleClose = () => {
-    router.push(`/note/${postId}`);
+    router.push(`/note/${noteId}`);
   };
 
   return (
     <div className="min-h-screen bg-black">
-      <NoteEditor noteId={postId} onClose={handleClose} />
+      <NoteEditor noteId={noteId} onClose={handleClose} />
     </div>
   );
 }

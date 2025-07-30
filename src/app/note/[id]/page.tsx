@@ -8,14 +8,14 @@ import { Header } from "@/components/Header";
 import { useQuery } from "convex-helpers/react/cache";
 import { Id } from "@/types";
 
-export default function PostPage() {
+export default function NotePage() {
   const params = useParams();
   const router = useRouter();
-  const postId = params.id as string;
+  const noteId = params.id as string;
 
-  const post = useQuery(api.posts.getPost, { postId: postId as Id<"posts"> });
+  const note = useQuery(api.notes.getNote, { noteId: noteId as Id<"notes"> });
 
-  if (!post) {
+  if (!note) {
     return (
       <div className="min-h-screen bg-black">
         <div className="flex min-h-screen items-center justify-center">
@@ -38,7 +38,7 @@ export default function PostPage() {
   return (
     <div className="min-h-screen bg-black">
       <div className="mx-auto w-full max-w-[1000px] p-4">
-        <NoteDetailView post={post} onBack={() => router.push("/")} />
+        <NoteDetailView note={note} onBack={() => router.push("/")} />
       </div>
     </div>
   );

@@ -9,18 +9,18 @@ import { ShareModal } from "../../ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-export function InstagramCard({ post, onEdit }: CardProps) {
+export function InstagramCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const sharePost = useAction(api.posts.sharePost);
+  const shareNote = useAction(api.notes.shareNote);
 
   const handleShare = async (email: string) => {
     try {
-      await sharePost({
+      await shareNote({
         email,
-        postId: post._id,
+        noteId: note._id,
       });
     } catch (error) {
-      console.error("Error sharing post:", error);
+      console.error("Error sharing note:", error);
       throw error;
     }
   };
@@ -28,34 +28,35 @@ export function InstagramCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/note/${post._id}`}
+        href={`/note/${note._id}`}
         prefetch={true}
         className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-neutral-950/20 bg-black transition-transform"
       >
-        {post.mediaUrls && post.mediaUrls.length > 0 && (
-          <div className="relative aspect-square overflow-hidden bg-gray-100">
-            <Image
-              src={post.mediaUrls[0] || ""}
-              alt="Post media"
-              fill
-              className="object-cover transition-transform duration-200 group-hover:scale-105"
-            />
-            {post.mediaUrls.length > 1 && (
-              <div className="absolute right-2 top-2 rounded bg-black bg-opacity-50 px-2 py-1 text-xs text-white">
-                +{post.mediaUrls.length - 1}
-              </div>
-            )}
-          </div>
-        )}
+        {note.mediaUrls &&
+          note.mediaUrls.filter((url) => url !== null).length > 0 && (
+            <div className="relative aspect-square overflow-hidden bg-gray-100">
+              <Image
+                src={note.mediaUrls.filter((url) => url !== null)[0] || ""}
+                alt="Note media"
+                fill
+                className="object-cover transition-transform duration-200 group-hover:scale-105"
+              />
+              {note.mediaUrls.filter((url) => url !== null).length > 1 && (
+                <div className="absolute right-2 top-2 rounded bg-black bg-opacity-50 px-2 py-1 text-xs text-white">
+                  +{note.mediaUrls.filter((url) => url !== null).length - 1}
+                </div>
+              )}
+            </div>
+          )}
         <div className="flex flex-1 flex-col p-4">
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white">
                 <SocialIcon platform="instagram" size={16} />
               </div>
-              {post.title && (
+              {note.title && (
                 <span className="text-sm font-medium text-neutral-100">
-                  {post.title}
+                  {note.title}
                 </span>
               )}
             </div>
@@ -63,7 +64,7 @@ export function InstagramCard({ post, onEdit }: CardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onEdit(post._id);
+                onEdit(note._id);
               }}
               className="z-10 text-gray-400 transition-colors hover:text-gray-600"
             >
@@ -72,15 +73,15 @@ export function InstagramCard({ post, onEdit }: CardProps) {
               </svg>
             </button>
           </div>
-          {post.content && (
+          {note.content && (
             <p className="mb-2 line-clamp-2 flex-1 text-sm text-gray-600">
-              {post.content}
+              {note.content}
             </p>
           )}
           <div className="mt-auto">
-            {post.hashtags && post.hashtags.length > 0 && (
+            {note.hashtags && note.hashtags.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-1">
-                {post.hashtags.slice(0, 3).map((tag, index) => (
+                {note.hashtags.slice(0, 3).map((tag, index) => (
                   <span key={index} className="text-xs text-blue-400">
                     #{tag}
                   </span>
@@ -89,7 +90,7 @@ export function InstagramCard({ post, onEdit }: CardProps) {
             )}
             <div className="flex items-center justify-between">
               <div className="text-xs text-gray-500">
-                {new Date(post._creationTime).toLocaleDateString("ru-RU")}
+                {new Date(note._creationTime).toLocaleDateString("en-US")}
               </div>
               <button
                 onClick={(e) => {
@@ -121,7 +122,7 @@ export function InstagramCard({ post, onEdit }: CardProps) {
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        post={post}
+        note={note}
         onShare={handleShare}
       />
     </>

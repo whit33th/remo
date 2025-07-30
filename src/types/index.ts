@@ -4,43 +4,43 @@ export type { Doc, Id };
 
 export type Platform = "instagram" | "X" | "youtube" | "telegram";
 
-export type PostStatus = "idea" | "schedule";
+export type NoteStatus = "idea" | "schedule";
 
 export type ViewType = "feed" | "calendar" | "create" | "profile";
 
-export type Post = Doc<"posts">;
+export type Note = Doc<"notes">;
 
 export type Notification = Doc<"notifications">;
 
-export interface PostWithMediaUrls extends Post {
+export interface NoteWithMediaUrls extends Note {
   mediaUrls?: (string | null)[];
 }
 
 export interface CardProps {
-  post: PostWithMediaUrls;
-  onEdit: (postId: Id<"posts">) => void;
+  note: NoteWithMediaUrls;
+  onEdit: (noteId: Id<"notes">) => void;
 }
 
 export interface ContentFeedProps {
   platform: Platform | null;
-  posts: PostWithMediaUrls[];
+  notes: NoteWithMediaUrls[];
   selectedPlatform: Platform | null;
-  onEditPost: (postId: Id<"posts"> | "new") => void;
+  onEditNote: (noteId: Id<"notes"> | "new") => void;
   currentView: ViewType;
 }
 
-export interface PostCardProps {
-  post: PostWithMediaUrls;
+export interface NoteCardProps {
+  note: NoteWithMediaUrls;
   onEdit: () => void;
 }
 
 export interface CalendarProps {
-  posts: PostWithMediaUrls[];
+  notes: NoteWithMediaUrls[];
   selectedPlatform: Platform | null;
-  onEditPost: (postId: Id<"posts"> | "new") => void;
+  onEditNote: (noteId: Id<"notes"> | "new") => void;
 }
 
-export interface PostEditorProps {
-  postId: Id<"posts"> | "new";
+export interface NoteEditorProps {
+  noteId: Id<"notes"> | "new";
   onClose: () => void;
 }

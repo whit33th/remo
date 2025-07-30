@@ -9,18 +9,18 @@ import { ShareModal } from "../../ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-export function TelegramCard({ post, onEdit }: CardProps) {
+export function TelegramCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const sharePost = useAction(api.posts.sharePost);
+  const shareNote = useAction(api.notes.shareNote);
 
   const handleShare = async (email: string) => {
     try {
-      await sharePost({
+      await shareNote({
         email,
-        postId: post._id,
+        noteId: note._id,
       });
     } catch (error) {
-      console.error("Error sharing post:", error);
+      console.error("Error sharing note:", error);
       throw error;
     }
   };
@@ -28,7 +28,7 @@ export function TelegramCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/note/${post._id}`}
+        href={`/note/${note._id}`}
         prefetch={true}
         className="cursor-pointer rounded-lg p-4"
       >
@@ -46,7 +46,7 @@ export function TelegramCard({ post, onEdit }: CardProps) {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    onEdit(post._id);
+                    onEdit(note._id);
                   }}
                   className="z-10 text-gray-400 transition-colors hover:text-gray-600"
                 >
@@ -61,14 +61,14 @@ export function TelegramCard({ post, onEdit }: CardProps) {
               </div>
             </div>
             <div className="mb-2">
-              {post.content && (
+              {note.content && (
                 <p className="leading-relaxed text-neutral-100">
-                  {post.content}
+                  {note.content}
                 </p>
               )}
-              {post.hashtags && post.hashtags.length > 0 && (
+              {note.hashtags && note.hashtags.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {post.hashtags.map((tag, index) => (
+                  {note.hashtags.map((tag, index) => (
                     <span key={index} className="text-xs text-blue-400">
                       #{tag}
                     </span>
@@ -76,19 +76,20 @@ export function TelegramCard({ post, onEdit }: CardProps) {
                 </div>
               )}
             </div>
-            {post.mediaUrls && post.mediaUrls.length > 0 && (
-              <div className="relative mb-3 aspect-video overflow-hidden rounded-lg">
-                <Image
-                  src={post.mediaUrls[0] || ""}
-                  alt="Post media"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
+            {note.mediaUrls &&
+              note.mediaUrls.filter((url) => url !== null).length > 0 && (
+                <div className="relative mb-3 aspect-video overflow-hidden rounded-lg">
+                  <Image
+                    src={note.mediaUrls.filter((url) => url !== null)[0] || ""}
+                    alt="Note media"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">
-                {new Date(post._creationTime).toLocaleDateString("ru-RU")}
+                {new Date(note._creationTime).toLocaleDateString("en-US")}
               </span>
               <button
                 onClick={(e) => {
@@ -117,11 +118,10 @@ export function TelegramCard({ post, onEdit }: CardProps) {
         </div>
       </Link>
 
-      {/* Share Modal - rendered outside of Link */}
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        post={post}
+        note={note}
         onShare={handleShare}
       />
     </>

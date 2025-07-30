@@ -9,18 +9,18 @@ import { ShareModal } from "../../ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-export function YouTubeCard({ post, onEdit }: CardProps) {
+export function YouTubeCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const sharePost = useAction(api.posts.sharePost);
+  const shareNote = useAction(api.notes.shareNote);
 
   const handleShare = async (email: string) => {
     try {
-      await sharePost({
+      await shareNote({
         email,
-        postId: post._id,
+        noteId: note._id,
       });
     } catch (error) {
-      console.error("Error sharing post:", error);
+      console.error("Error sharing note:", error);
       throw error;
     }
   };
@@ -28,35 +28,35 @@ export function YouTubeCard({ post, onEdit }: CardProps) {
   return (
     <>
       <Link
-        href={`/note/${post._id}`}
+        href={`/note/${note._id}`}
         prefetch={true}
         className="cursor-pointer overflow-hidden rounded-lg bg-black transition-transform hover:scale-[1.02]"
       >
-        {/* YouTube-style video thumbnail */}
-        {post.mediaUrls && post.mediaUrls.length > 0 && (
-          <div className="relative">
-            <div className="aspect-video bg-gray-100">
-              <Image
-                src={post.mediaUrls[0] || ""}
-                alt="Video thumbnail"
-                fill
-                className="object-cover"
-              />
+        {note.mediaUrls &&
+          note.mediaUrls.filter((url) => url !== null).length > 0 && (
+            <div className="relative">
+              <div className="aspect-video bg-gray-100">
+                <Image
+                  src={note.mediaUrls.filter((url) => url !== null)[0] || ""}
+                  alt="Video thumbnail"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="absolute bottom-2 right-2 rounded bg-black bg-opacity-80 px-2 py-1 text-xs text-white">
+                10:30
+              </div>
             </div>
-            <div className="absolute bottom-2 right-2 rounded bg-black bg-opacity-80 px-2 py-1 text-xs text-white">
-              10:30
-            </div>
-          </div>
-        )}
+          )}
         <div className="p-4">
           <div className="mb-2 flex items-start justify-between">
             <div className="flex items-center space-x-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white">
                 <SocialIcon platform="youtube" size={16} />
               </div>
-              {post.title && (
+              {note.title && (
                 <h3 className="line-clamp-2 flex-1 font-semibold text-neutral-100">
-                  {post.title}
+                  {note.title}
                 </h3>
               )}
             </div>
@@ -64,7 +64,7 @@ export function YouTubeCard({ post, onEdit }: CardProps) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onEdit(post._id);
+                onEdit(note._id);
               }}
               className="z-10 ml-2 flex-shrink-0 text-gray-400 transition-colors hover:text-gray-600"
             >
@@ -73,16 +73,16 @@ export function YouTubeCard({ post, onEdit }: CardProps) {
               </svg>
             </button>
           </div>
-          {post.content && (
+          {note.content && (
             <p className="mb-2 line-clamp-2 text-sm text-gray-600">
-              {post.content}
+              {note.content}
             </p>
           )}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <span>Channel Name</span>
               <span className="text-xs text-gray-500">
-                {new Date(post._creationTime).toLocaleDateString("ru-RU")}
+                {new Date(note._creationTime).toLocaleDateString("en-US")}
               </span>
             </div>
             <button
@@ -111,11 +111,10 @@ export function YouTubeCard({ post, onEdit }: CardProps) {
         </div>
       </Link>
 
-      {/* Share Modal - rendered outside of Link */}
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        post={post}
+        note={note}
         onShare={handleShare}
       />
     </>

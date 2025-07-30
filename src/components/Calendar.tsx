@@ -4,29 +4,19 @@ import { Calendar as CalendarIcon, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { PlatformIcon } from "./PlatformIcons";
 import { PlatformSwiper } from "./PlatformSwiper";
-import { Platform } from "@/types";
-
-interface Post {
-  _id: string;
-  title: string;
-  content: string;
-  platform: "instagram" | "X" | "youtube" | "telegram";
-  status: "idea" | "schedule";
-  scheduledDate?: number;
-  mediaUrls?: (string | null)[];
-}
+import { Note, Platform } from "@/types";
 
 interface CalendarProps {
-  posts: Post[];
+  notes: Note[];
   selectedPlatform: "instagram" | "X" | "youtube" | "telegram" | null;
-  onEditPost: (postId: string) => void;
+  onEditNote: (noteId: string) => void;
   onPlatformChange?: (platform: Platform | null) => void;
 }
 
 export function Calendar({
-  posts,
+  notes,
   selectedPlatform,
-  onEditPost,
+  onEditNote,
   onPlatformChange,
 }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -38,17 +28,17 @@ export function Calendar({
     telegram: "bg-gradient-to-r from-cyan-400 to-cyan-600",
   };
 
-  const scheduledPosts = posts.filter(
-    (post) =>
-      post.scheduledDate &&
-      (selectedPlatform ? post.platform === selectedPlatform : true),
+  const scheduledNotes = notes.filter(
+    (note) =>
+      note.scheduledDate &&
+      (selectedPlatform ? note.platform === selectedPlatform : true),
   );
 
-  const unscheduledPosts = posts.filter(
-    (post) =>
-      !post.scheduledDate &&
-      post.status === "idea" &&
-      (selectedPlatform ? post.platform === selectedPlatform : true),
+  const unscheduledNotes = notes.filter(
+    (note) =>
+      !note.scheduledDate &&
+      note.status === "idea" &&
+      (selectedPlatform ? note.platform === selectedPlatform : true),
   );
 
   const getDaysInMonth = (date: Date) => {
@@ -72,14 +62,14 @@ export function Calendar({
     return days;
   };
 
-  const getPostsForDate = (date: Date) => {
-    return scheduledPosts.filter((post) => {
-      if (!post.scheduledDate) return false;
-      const postDate = new Date(post.scheduledDate);
+  const getNotesForDate = (date: Date) => {
+    return scheduledNotes.filter((note) => {
+      if (!note.scheduledDate) return false;
+      const noteDate = new Date(note.scheduledDate);
       return (
-        postDate.getDate() === date.getDate() &&
-        postDate.getMonth() === date.getMonth() &&
-        postDate.getFullYear() === date.getFullYear()
+        noteDate.getDate() === date.getDate() &&
+        noteDate.getMonth() === date.getMonth() &&
+        noteDate.getFullYear() === date.getFullYear()
       );
     });
   };
@@ -119,7 +109,6 @@ export function Calendar({
 
   return (
     <div>
-      {/* Platform Swiper */}
       {onPlatformChange && (
         <div className="mx-auto mb-4 w-full max-w-[1000px] border-b border-neutral-900 py-3">
           <PlatformSwiper
@@ -179,7 +168,6 @@ export function Calendar({
         </div>
 
         <div className="overflow-hidden rounded-lg border border-neutral-900 bg-black">
-          {/* Calendar Header */}
           <div className="grid grid-cols-7 border-b border-neutral-900 bg-neutral-950">
             {weekDays.map((day) => (
               <div
@@ -191,7 +179,6 @@ export function Calendar({
             ))}
           </div>
 
-          {/* Calendar Grid */}
           <div className="grid grid-cols-7">
             {getDaysInMonth(currentDate).map((date, index) => (
               <div
@@ -204,20 +191,20 @@ export function Calendar({
                       {date.getDate()}
                     </div>
                     <div className="space-y-1">
-                      {getPostsForDate(date).map((post) => (
+                      {getNotesForDate(date).map((note) => (
                         <div
-                          key={post._id}
-                          onClick={() => onEditPost(post._id)}
-                          className={`${platformColors[post.platform]} cursor-pointer rounded p-1 text-xs text-white transition-opacity hover:opacity-80`}
+                          key={note._id}
+                          onClick={() => onEditNote(note._id)}
+                          className={`${platformColors[note.platform]} cursor-pointer rounded p-1 text-xs text-white transition-opacity hover:opacity-80`}
                         >
                           <div className="flex items-center space-x-1">
                             <PlatformIcon
-                              platform={post.platform}
+                              platform={note.platform}
                               size={16}
                               className="text-current"
                             />
                             <span className="truncate">
-                              {post.title || "Untitled"}
+                              {note.title || "Untitled"}
                             </span>
                           </div>
                         </div>
@@ -229,38 +216,37 @@ export function Calendar({
             ))}
           </div>
         </div>
-        {/* Unscheduled Posts */}
-        {unscheduledPosts.length > 0 && (
+        {unscheduledNotes.length > 0 && (
           <div className="mt-8">
             <h3 className="mb-4 text-lg font-semibold text-neutral-100">
-              Unscheduled Posts
+              Unscheduled Notes
             </h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {unscheduledPosts.map((post) => (
+              {unscheduledNotes.map((note) => (
                 <div
-                  key={post._id}
-                  onClick={() => onEditPost(post._id)}
+                  key={note._id}
+                  onClick={() => onEditNote(note._id)}
                   className="cursor-pointer rounded-lg border border-neutral-900 bg-black p-4 transition-shadow hover:shadow-md"
                 >
                   <div className="mb-2 flex items-center space-x-2">
                     <div
-                      className={`h-6 w-6 rounded-full ${platformColors[post.platform]} flex items-center justify-center text-xs text-white`}
+                      className={`h-6 w-6 rounded-full ${platformColors[note.platform]} flex items-center justify-center text-xs text-white`}
                     >
                       <PlatformIcon
-                        platform={post.platform}
+                        platform={note.platform}
                         size={14}
                         className="text-white"
                       />
                     </div>
                     <span className="text-sm font-medium text-neutral-100">
-                      {post.title || "Untitled"}
+                      {note.title || "Untitled"}
                     </span>
                   </div>
                   <p className="line-clamp-2 text-sm text-gray-600">
-                    {post.content}
+                    {note.content}
                   </p>
                   <div className="mt-2 text-xs text-neutral-200">
-                    {isIdeaStatus(post.status) ? (
+                    {isIdeaStatus(note.status) ? (
                       <div className="flex items-center space-x-1">
                         <Lightbulb className="h-3 w-3" />
                         <span>Idea</span>

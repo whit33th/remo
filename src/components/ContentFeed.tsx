@@ -2,34 +2,17 @@
 
 import { Edit } from "lucide-react";
 import { GRID_LAYOUTS } from "../constants";
-import { ContentFeedProps, Id } from "../types";
-import { Calendar } from "./Calendar";
+import { ContentFeedProps } from "../types";
 import {
   InstagramCard,
   TelegramCard,
   XCard,
   YouTubeCard,
 } from "./containerts/Cards";
-import { PostCard } from "./PostCard";
+import { NoteCard } from "./NoteCard";
 
-export function ContentFeed({
-  platform,
-  posts,
-  selectedPlatform,
-  onEditPost,
-  currentView,
-}: ContentFeedProps) {
-  if (currentView === "calendar") {
-    return (
-      <Calendar
-        posts={posts}
-        selectedPlatform={selectedPlatform}
-        onEditPost={(postId: string) => onEditPost(postId as Id<"posts">)}
-      />
-    );
-  }
-
-  const sortedPosts = [...posts].sort((a, b) => {
+export function ContentFeed({ platform, notes, onEditNote }: ContentFeedProps) {
+  const sortedNotes = [...notes].sort((a, b) => {
     if (a.scheduledDate && !b.scheduledDate) return -1;
     if (!a.scheduledDate && b.scheduledDate) return 1;
 
@@ -45,9 +28,9 @@ export function ContentFeed({
       case "instagram":
         return (
           <div className={GRID_LAYOUTS.instagram}>
-            {sortedPosts.map((post) => (
-              <div key={post._id} className="h-full">
-                <InstagramCard post={post} onEdit={onEditPost} />
+            {sortedNotes.map((note) => (
+              <div key={note._id} className="h-full">
+                <InstagramCard note={note} onEdit={onEditNote} />
               </div>
             ))}
           </div>
@@ -56,8 +39,8 @@ export function ContentFeed({
       case "X":
         return (
           <div className={GRID_LAYOUTS.X}>
-            {sortedPosts.map((post) => (
-              <XCard key={post._id} post={post} onEdit={onEditPost} />
+            {sortedNotes.map((note) => (
+              <XCard key={note._id} note={note} onEdit={onEditNote} />
             ))}
           </div>
         );
@@ -65,8 +48,8 @@ export function ContentFeed({
       case "youtube":
         return (
           <div className={GRID_LAYOUTS.youtube}>
-            {sortedPosts.map((post) => (
-              <YouTubeCard key={post._id} post={post} onEdit={onEditPost} />
+            {sortedNotes.map((note) => (
+              <YouTubeCard key={note._id} note={note} onEdit={onEditNote} />
             ))}
           </div>
         );
@@ -74,8 +57,8 @@ export function ContentFeed({
       case "telegram":
         return (
           <div className={GRID_LAYOUTS.telegram}>
-            {sortedPosts.map((post) => (
-              <TelegramCard key={post._id} post={post} onEdit={onEditPost} />
+            {sortedNotes.map((note) => (
+              <TelegramCard key={note._id} note={note} onEdit={onEditNote} />
             ))}
           </div>
         );
@@ -83,11 +66,11 @@ export function ContentFeed({
       default:
         return (
           <div className="space-y-0">
-            {sortedPosts.map((post) => (
-              <PostCard
-                key={post._id}
-                post={post}
-                onEdit={() => onEditPost(post._id)}
+            {sortedNotes.map((note) => (
+              <NoteCard
+                key={note._id}
+                note={note}
+                onEdit={() => onEditNote(note._id)}
               />
             ))}
           </div>
@@ -97,9 +80,9 @@ export function ContentFeed({
 
   return (
     <section className="w-full">
-      {/* Posts Feed */}
+      {/* Notes Feed */}
       <div className="space-y-0 overflow-hidden">
-        {sortedPosts.length === 0 ? (
+        {sortedNotes.length === 0 ? (
           <div className="py-16 text-center">
             <div className="mb-4 text-6xl">
               <Edit className="mx-auto h-16 w-16 text-gray-400" />
@@ -107,13 +90,7 @@ export function ContentFeed({
             <h3 className="mb-2 text-xl font-semibold text-neutral-100">
               No content yet
             </h3>
-            <p className="mb-6 text-gray-600">Create your first post or idea</p>
-            <button
-              onClick={() => onEditPost("new")}
-              className="rounded-full bg-neutral-100 px-6 py-3 font-semibold text-black transition-colors hover:bg-neutral-300"
-            >
-              Create Post
-            </button>
+            <p className="mb-6 text-gray-600">Create your first note or idea</p>
           </div>
         ) : (
           renderPlatformSpecificFeed()

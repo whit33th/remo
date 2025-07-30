@@ -45,14 +45,14 @@ export const sendNotificationEmail = internalAction({
       return null;
     }
 
-    const post = await ctx.runQuery(internal.posts.getPostById, {
-      id: notification.postId,
+    const note = await ctx.runQuery(internal.notes.getNoteById, {
+      id: notification.noteId,
     });
 
     let mediaUrls: string[] = [];
-    if (post && post.mediaIds.length > 0) {
-      mediaUrls = await ctx.runQuery(internal.posts.getMediaUrls, {
-        mediaIds: post.mediaIds,
+    if (note && note.mediaIds.length > 0) {
+      mediaUrls = await ctx.runQuery(internal.notes.getMediaUrls, {
+        mediaIds: note.mediaIds,
       });
     }
 
@@ -61,7 +61,7 @@ export const sendNotificationEmail = internalAction({
         from: "Content Creator Assistant <notifications@resend.dev>",
         to: user.email,
         subject: getEmailSubject(notification.type),
-        html: getEmailContent(notification, post, mediaUrls),
+        html: getEmailContent(notification, note, mediaUrls),
       });
 
       await ctx.runMutation(internal.sendEmails.markNotificationSent, {
@@ -87,11 +87,11 @@ export const sendDailyReminder = internalAction({
       return null;
     }
 
-    const posts = await ctx.runQuery(internal.shared.getUserPostsForReminders, {
+    const notes = await ctx.runQuery(internal.shared.getUserNotesForReminders, {
       userId: args.userId,
     });
 
-    if (posts.length === 0) {
+    if (notes.length === 0) {
       return null;
     }
 
@@ -100,7 +100,7 @@ export const sendDailyReminder = internalAction({
         from: "Content Creator Assistant <notifications@resend.dev>",
         to: user.email,
         subject: "📋 Daily Content Report",
-        html: getDailyReminderContent(posts),
+        html: getDailyReminderContent(notes),
       });
 
       await ctx.runMutation(internal.sendEmails.markNotificationSent, {
@@ -115,33 +115,33 @@ export const sendDailyReminder = internalAction({
 export const sendShareEmail = internalAction({
   args: {
     email: v.string(),
-    postId: v.id("posts"),
+    noteId: v.id("notes"),
     userEmail: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const postData = await ctx.runQuery(internal.posts.getPostById, {
-      id: args.postId,
+    const noteData = await ctx.runQuery(internal.notes.getNoteById, {
+      id: args.noteId,
     });
 
-    if (!postData) {
-      throw new Error("Post not found");
+    if (!noteData) {
+      throw new Error("Note not found");
     }
 
     let mediaUrls: string[] = [];
-    if (postData.mediaIds && postData.mediaIds.length > 0) {
-      mediaUrls = await ctx.runQuery(internal.posts.getMediaUrls, {
-        mediaIds: postData.mediaIds,
+    if (noteData.mediaIds && noteData.mediaIds.length > 0) {
+      mediaUrls = await ctx.runQuery(internal.notes.getMediaUrls, {
+        mediaIds: noteData.mediaIds,
       });
     }
 
-    const html = createShareEmailContent(postData, args.userEmail, mediaUrls);
+    const html = createShareEmailContent(noteData, args.userEmail, mediaUrls);
 
     try {
       await resend.sendEmail(ctx, {
         from: "Content Creator Assistant <notifications@resend.dev>",
         to: args.email,
-        subject: `Shared Post: ${postData.title || "Content"}`,
+        subject: `Shared Note: ${noteData.title || "Content"}`,
         html,
       });
     } catch (error) {
@@ -213,7 +213,7 @@ function getEmailSubject(type: string): string {
 
 function getEmailContent(
   notification: any,
-  post?: any,
+  note?: any,
   mediaUrls: string[] = [],
 ): string {
   const baseStyle = `
@@ -230,7 +230,7 @@ function getEmailContent(
           This is an automatic notification from Content Creator Assistant
         </p>
         <p style="color: #666; font-size: 12px; margin: 10px 0 0 0;">
-          You received this email because you enabled notifications for your posts
+          You received this email because you enabled notifications for your notes
         </p>
       </div>
     </div>
@@ -238,9 +238,9 @@ function getEmailContent(
 
   let content = "";
 
-  if (post) {
-    const platformColor = getPlatformColor(post.platform);
-    const statusInfo = getStatusInfo(post.status);
+  if (note) {
+    const platformColor = getPlatformColor(note.platform);
+    const statusInfo = getStatusInfo(note.status);
 
     content = `
       <div style="background: #000000; border: 1px solid #333; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
@@ -248,10 +248,10 @@ function getEmailContent(
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px;">
           <div style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, ${platformColor}); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-              ${getPlatformName(post.platform).charAt(0)}
+              ${getPlatformName(note.platform).charAt(0)}
             </div>
             <div>
-              <div style="font-weight: 600; color: #ffffff; font-size: 16px;">${post.title || "No title"}</div>
+              <div style="font-weight: 600; color: #ffffff; font-size: 16px;">${note.title || "No title"}</div>
             </div>
           </div>
         </div>
@@ -265,20 +265,20 @@ function getEmailContent(
           </div>
 
           ${
-            post.content
+            note.content
               ? `
             <p style="margin-bottom: 12px; line-height: 1.6; color: #ffffff; font-size: 14px;">
-              ${post.content.substring(0, 200)}${post.content.length > 200 ? "..." : ""}
+              ${note.content.substring(0, 200)}${note.content.length > 200 ? "..." : ""}
             </p>
           `
               : ""
           }
 
           ${
-            post.hashtags && post.hashtags.length > 0
+            note.hashtags && note.hashtags.length > 0
               ? `
             <div style="margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
-              ${post.hashtags
+              ${note.hashtags
                 .slice(0, 3)
                 .map(
                   (tag: string) => `
@@ -287,9 +287,9 @@ function getEmailContent(
                 )
                 .join("")}
               ${
-                post.hashtags.length > 3
+                note.hashtags.length > 3
                   ? `
-                <span style="font-size: 12px; color: #666666;">+${post.hashtags.length - 3} more</span>
+                <span style="font-size: 12px; color: #666666;">+${note.hashtags.length - 3} more</span>
               `
                   : ""
               }
@@ -306,7 +306,7 @@ function getEmailContent(
                 .slice(0, 4)
                 .map(
                   (url: string) => `
-                <img src="${url}" alt="Post media" style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #333;" />
+                <img src="${url}" alt="Note media" style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #333;" />
               `,
                 )
                 .join("")}
@@ -327,16 +327,16 @@ function getEmailContent(
           <!-- Footer -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
             ${
-              post.scheduledDate
+              note.scheduledDate
                 ? `
               <span style="font-size: 12px; color: #999999;">
-                ${new Date(post.scheduledDate).toLocaleDateString("en-US")}
+                ${new Date(note.scheduledDate).toLocaleDateString("en-US")}
               </span>
             `
                 : ""
             }
             <div style="display: flex; align-items: center; gap: 4px; color: #cccccc;">
-              <span style="font-size: 12px;">${getPlatformName(post.platform)}</span>
+              <span style="font-size: 12px;">${getPlatformName(note.platform)}</span>
             </div>
           </div>
         </div>
@@ -356,7 +356,7 @@ function getEmailContent(
   );
 }
 
-function getDailyReminderContent(posts: any[]): string {
+function getDailyReminderContent(notes: any[]): string {
   const baseStyle = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #000000; color: #ffffff;">
       <div style="background-color: #000000; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px; border: 1px solid #333;">
@@ -374,8 +374,8 @@ function getDailyReminderContent(posts: any[]): string {
     </div>
   `;
 
-  const scheduledPosts = posts.filter((p) => p.status === "schedule");
-  const ideaPosts = posts.filter((p) => p.status === "idea");
+  const scheduledNotes = notes.filter((n) => n.status === "schedule");
+  const ideaNotes = notes.filter((n) => n.status === "idea");
 
   let content = `
     <div style="background: #000000; padding: 20px; border-radius: 10px; border: 1px solid #333;">
@@ -383,32 +383,32 @@ function getDailyReminderContent(posts: any[]): string {
       
       <div style="display: grid; gap: 12px; margin-bottom: 24px;">
         <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 4px solid #4caf50;">
-          <h4 style="margin: 0 0 4px 0; color: #4caf50; font-size: 14px; font-weight: 600;">⏰ Scheduled: ${scheduledPosts.length}</h4>
+          <h4 style="margin: 0 0 4px 0; color: #4caf50; font-size: 14px; font-weight: 600;">⏰ Scheduled: ${scheduledNotes.length}</h4>
         </div>
 
         <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 4px solid #9c27b0;">
-          <h4 style="margin: 0 0 4px 0; color: #9c27b0; font-size: 14px; font-weight: 600;">💡 Ideas: ${ideaPosts.length}</h4>
+          <h4 style="margin: 0 0 4px 0; color: #9c27b0; font-size: 14px; font-weight: 600;">💡 Ideas: ${ideaNotes.length}</h4>
         </div>
       </div>
   `;
 
-  if (scheduledPosts.length > 0) {
+  if (scheduledNotes.length > 0) {
     content += `
       <h3 style="color: #ffffff; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">Today's publications:</h3>
       <div style="margin-bottom: 16px;">
     `;
 
     const today = new Date();
-    const todaysPosts = scheduledPosts.filter((post) => {
-      if (!post.scheduledDate) return false;
-      const postDate = new Date(post.scheduledDate);
-      return postDate.toDateString() === today.toDateString();
+    const todaysNotes = scheduledNotes.filter((note) => {
+      if (!note.scheduledDate) return false;
+      const noteDate = new Date(note.scheduledDate);
+      return noteDate.toDateString() === today.toDateString();
     });
 
-    if (todaysPosts.length > 0) {
-      todaysPosts.forEach((post) => {
-        const platformColor = getPlatformColor(post.platform);
-        const statusInfo = getStatusInfo(post.status);
+    if (todaysNotes.length > 0) {
+      todaysNotes.forEach((note) => {
+        const platformColor = getPlatformColor(note.platform);
+        const statusInfo = getStatusInfo(note.status);
 
         content += `
           <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; margin-bottom: 12px;">
@@ -416,10 +416,10 @@ function getDailyReminderContent(posts: any[]): string {
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, ${platformColor}); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">
-                  ${getPlatformName(post.platform).charAt(0)}
+                  ${getPlatformName(note.platform).charAt(0)}
                 </div>
                 <div>
-                  <div style="font-weight: 600; color: #ffffff; font-size: 14px;">${post.title || "No title"}</div>
+                  <div style="font-weight: 600; color: #ffffff; font-size: 14px;">${note.title || "No title"}</div>
                 </div>
               </div>
             </div>
@@ -433,10 +433,10 @@ function getDailyReminderContent(posts: any[]): string {
               </div>
 
               ${
-                post.content
+                note.content
                   ? `
                 <p style="margin-bottom: 8px; line-height: 1.5; color: #cccccc; font-size: 12px;">
-                  ${post.content.substring(0, 80)}...
+                  ${note.content.substring(0, 80)}...
                 </p>
               `
                   : ""
@@ -445,10 +445,10 @@ function getDailyReminderContent(posts: any[]): string {
               <!-- Footer -->
               <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px;">
                 <span style="font-size: 11px; color: #999999;">
-                  🕐 ${new Date(post.scheduledDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                  🕐 ${new Date(note.scheduledDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                 </span>
                 <div style="display: flex; align-items: center; gap: 3px; color: #cccccc;">
-                  <span style="font-size: 11px;">${getPlatformName(post.platform)}</span>
+                  <span style="font-size: 11px;">${getPlatformName(note.platform)}</span>
                 </div>
               </div>
             </div>
@@ -468,7 +468,7 @@ function getDailyReminderContent(posts: any[]): string {
 }
 
 export function createShareEmailContent(
-  postData: any,
+  noteData: any,
   userEmail: string,
   mediaUrls: string[] = [],
 ): string {
@@ -487,7 +487,7 @@ export function createShareEmailContent(
           This is an automatic notification from Content Creator Assistant
         </p>
         <p style="color: #666; font-size: 12px; margin: 10px 0 0 0;">
-          You received this email because you enabled notifications for your posts
+          You received this email because you enabled notifications for your notes
         </p>
       </div>
     </div>
@@ -495,9 +495,9 @@ export function createShareEmailContent(
 
   let content = "";
 
-  if (postData) {
-    const platformColor = getPlatformColor(postData.platform);
-    const statusInfo = getStatusInfo(postData.status);
+  if (noteData) {
+    const platformColor = getPlatformColor(noteData.platform);
+    const statusInfo = getStatusInfo(noteData.status);
 
     content = `
       <div style="background: #000000; border: 1px solid #333; border-radius: 12px; overflow: hidden; margin-bottom: 20px;">
@@ -506,7 +506,7 @@ export function createShareEmailContent(
           <div style="display: flex; align-items: center; gap: 12px;">
             
             <div>
-              <div style="font-weight: 600; color: #ffffff; font-size: 16px;">${postData.title || "No title"}</div>
+              <div style="font-weight: 600; color: #ffffff; font-size: 16px;">${noteData.title || "No title"}</div>
             </div>
           </div>
         </div>
@@ -520,20 +520,20 @@ export function createShareEmailContent(
           </div>
 
           ${
-            postData.content
+            noteData.content
               ? `
             <p style="margin-bottom: 12px; line-height: 1.6; color: #ffffff; font-size: 14px;">
-              ${postData.content.substring(0, 200)}${postData.content.length > 200 ? "..." : ""}
+              ${noteData.content.substring(0, 200)}${noteData.content.length > 200 ? "..." : ""}
             </p>
           `
               : ""
           }
 
           ${
-            postData.hashtags && postData.hashtags.length > 0
+            noteData.hashtags && noteData.hashtags.length > 0
               ? `
             <div style="margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
-              ${postData.hashtags
+              ${noteData.hashtags
                 .slice(0, 3)
                 .map(
                   (tag: string) => `
@@ -542,9 +542,9 @@ export function createShareEmailContent(
                 )
                 .join("")}
               ${
-                postData.hashtags.length > 3
+                noteData.hashtags.length > 3
                   ? `
-                <span style="font-size: 12px; color: #666666;">+${postData.hashtags.length - 3} more</span>
+                <span style="font-size: 12px; color: #666666;">+${noteData.hashtags.length - 3} more</span>
               `
                   : ""
               }
@@ -554,10 +554,10 @@ export function createShareEmailContent(
           }
 
           ${
-            postData.mentions && postData.mentions.length > 0
+            noteData.mentions && noteData.mentions.length > 0
               ? `
             <div style="margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px;">
-              ${postData.mentions
+              ${noteData.mentions
                 .slice(0, 3)
                 .map(
                   (mention: string) => `
@@ -566,9 +566,9 @@ export function createShareEmailContent(
                 )
                 .join("")}
               ${
-                postData.mentions.length > 3
+                noteData.mentions.length > 3
                   ? `
-                <span style="font-size: 12px; color: #666666;">+${postData.mentions.length - 3} more</span>
+                <span style="font-size: 12px; color: #666666;">+${noteData.mentions.length - 3} more</span>
               `
                   : ""
               }
@@ -578,10 +578,10 @@ export function createShareEmailContent(
           }
 
           ${
-            postData.links && postData.links.length > 0
+            noteData.links && noteData.links.length > 0
               ? `
             <div style="margin-bottom: 8px;">
-              ${postData.links
+              ${noteData.links
                 .slice(0, 2)
                 .map(
                   (link: string) => `
@@ -590,9 +590,9 @@ export function createShareEmailContent(
                 )
                 .join("")}
               ${
-                postData.links.length > 2
+                noteData.links.length > 2
                   ? `
-                <span style="font-size: 12px; color: #666666;">+${postData.links.length - 2} more links</span>
+                <span style="font-size: 12px; color: #666666;">+${noteData.links.length - 2} more links</span>
               `
                   : ""
               }
@@ -609,7 +609,7 @@ export function createShareEmailContent(
                 .slice(0, 4)
                 .map(
                   (url: string) => `
-                <img src="${url}" alt="Post media" style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #333;" />
+                <img src="${url}" alt="Note media" style="width: 100%; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #333;" />
               `,
                 )
                 .join("")}
@@ -630,16 +630,16 @@ export function createShareEmailContent(
           <!-- Footer -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
             ${
-              postData.scheduledDate
+              noteData.scheduledDate
                 ? `
               <span style="font-size: 12px; color: #999999;">
-                ${new Date(postData.scheduledDate).toLocaleDateString("en-US")}
+                ${new Date(noteData.scheduledDate).toLocaleDateString("en-US")}
               </span>
             `
                 : ""
             }
             <div style="display: flex; align-items: center; gap: 4px; color: #cccccc;">
-              <span style="font-size: 12px;">${getPlatformName(postData.platform)}</span>
+              <span style="font-size: 12px;">${getPlatformName(noteData.platform)}</span>
             </div>
           </div>
         </div>

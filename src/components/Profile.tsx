@@ -63,7 +63,6 @@ export function Profile() {
   return (
     <div className="bg-black p-4 text-white">
       <div className="mx-auto max-w-md">
-        {/* Profile header */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-neutral-800">
             <User className="h-10 w-10 text-neutral-400" />
@@ -72,14 +71,12 @@ export function Profile() {
           <p className="text-sm text-neutral-400">{user.email}</p>
         </div>
 
-        {/* Notification settings */}
         <div className="mb-6 rounded-lg bg-neutral-900 p-6">
           <div className="mb-4 flex items-center">
             <Settings className="mr-2 h-5 w-5 text-neutral-400" />
             <h2 className="text-lg font-medium">Notification Settings</h2>
           </div>
 
-          {/* Notification toggle */}
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center">
               {notificationsEnabled ? (
@@ -103,7 +100,6 @@ export function Profile() {
             </button>
           </div>
 
-          {/* Notification time */}
           {notificationsEnabled && (
             <div className="space-y-3">
               <div className="flex items-center">
@@ -123,7 +119,6 @@ export function Profile() {
           )}
         </div>
 
-        {/* Save button */}
         <Button
           onClick={handleSaveSettings}
           disabled={isLoading}

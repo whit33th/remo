@@ -10,12 +10,12 @@ export const getUserById = internalQuery({
   },
 });
 
-export const getUserPostsForReminders = internalQuery({
+export const getUserNotesForReminders = internalQuery({
   args: { userId: v.id("users") },
   returns: v.array(v.any()),
-  handler: async (ctx, args): Promise<Doc<"posts">[]> => {
+  handler: async (ctx, args): Promise<Doc<"notes">[]> => {
     return await ctx.db
-      .query("posts")
+      .query("notes")
       .filter((q) => q.eq(q.field("userId"), args.userId))
       .collect();
   },

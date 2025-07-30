@@ -5,7 +5,7 @@ import { useQuery } from "convex-helpers/react/cache";
 import { api } from "@/convex/_generated/api";
 import { PlatformSwiper } from "./PlatformSwiper";
 import { ContentFeed } from "./ContentFeed";
-import { PostEditor } from "./PostEditor";
+import { NoteEditor } from "./NoteEditor";
 import { Platform, ViewType } from "@/types";
 
 interface MainFeedProps {
@@ -20,7 +20,7 @@ export function MainFeed({
   const [internalSelectedPlatform, setInternalSelectedPlatform] =
     useState<Platform | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>("feed");
-  const [editingPost, setEditingPost] = useState<string | null>(null);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
 
   const selectedPlatform =
     externalSelectedPlatform !== undefined
@@ -28,13 +28,12 @@ export function MainFeed({
       : internalSelectedPlatform;
   const setSelectedPlatform = onPlatformChange || setInternalSelectedPlatform;
 
-  const posts = useQuery(api.posts.getUserPosts, {
+  const notes = useQuery(api.notes.getUserNotes, {
     platform: selectedPlatform || undefined,
   });
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Platform Swiper */}
       <div className="mx-auto mb-4 w-full max-w-[1000px] border-b border-neutral-900 py-3">
         <PlatformSwiper
           selectedPlatform={selectedPlatform}
@@ -42,19 +41,24 @@ export function MainFeed({
         />
       </div>
 
-      {/* Main Content */}
       <div className="mx-auto w-full max-w-[1000px] flex-1 overflow-y-auto">
-        {editingPost ? (
-          <PostEditor
-            postId={editingPost}
-            onClose={() => setEditingPost(null)}
+        {editingNote ? (
+          <NoteEditor
+            noteId={editingNote}
+            onClose={() => setEditingNote(null)}
           />
         ) : (
           <ContentFeed
             platform={selectedPlatform}
-            posts={posts || []}
+            notes={notes || []}
             selectedPlatform={selectedPlatform}
-            onEditPost={setEditingPost}
+            onEditNote={(noteId) => {
+              if (noteId === "new") {
+                setEditingNote("new");
+              } else {
+                setEditingNote(noteId);
+              }
+            }}
             currentView={currentView}
           />
         )}

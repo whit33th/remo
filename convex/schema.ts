@@ -9,7 +9,7 @@ const applicationTables = {
     notificationTime: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
   }).index("by_email", ["email"]),
-  posts: defineTable({
+  notes: defineTable({
     title: v.string(),
     content: v.string(),
     platform: v.union(
@@ -40,7 +40,7 @@ const applicationTables = {
 
   notifications: defineTable({
     userId: v.id("users"),
-    postId: v.id("posts"),
+    noteId: v.id("notes"),
     type: v.union(
       v.literal("deadline"),
       v.literal("reminder"),
@@ -53,7 +53,7 @@ const applicationTables = {
     scheduledFor: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_post", ["postId"])
+    .index("by_note", ["noteId"])
     .index("by_scheduled", ["scheduledFor", "sent"]),
 };
 

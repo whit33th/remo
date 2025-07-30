@@ -10,9 +10,9 @@ import { v } from "convex/values";
 const crons = cronJobs();
 
 crons.interval(
-  "check overdue posts",
+  "check overdue notes",
   { minutes: 60 },
-  internal.crons.checkOverduePosts,
+  internal.crons.checkOverdueNotes,
   {},
 );
 
@@ -29,23 +29,23 @@ crons.interval(
   internal.crons.cleanupResend,
 );
 
-export const checkOverduePosts = internalAction({
+export const checkOverdueNotes = internalAction({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
     const now = Date.now();
-    const overduePosts = await ctx.runQuery(internal.crons.getOverduePosts, {
+    const overdueNotes = await ctx.runQuery(internal.crons.getOverdueNotes, {
       now,
     });
 
-    for (const post of overduePosts) {
+    for (const note of overdueNotes) {
       const notificationId = await ctx.runMutation(
         internal.notifications.createInternalNotification,
         {
-          userId: post.userId,
-          postId: post._id,
+          userId: note.userId,
+          noteId: note._id,
           type: "overdue",
-          message: `🚨 Post "${post.title}" is overdue! Scheduled publication date: ${new Date(post.scheduledDate!).toLocaleDateString("en-US")}`,
+          message: `🚨 Note "${note.title}" is overdue! Scheduled publication date: ${new Date(note.scheduledDate!).toLocaleDateString("en-US")}`,
           scheduledFor: now,
         },
       );
@@ -72,9 +72,9 @@ export const sendDailyReminders = internalAction({
 
       await ctx.runMutation(internal.notifications.createInternalNotification, {
         userId: user._id,
-        postId: "daily" as any,
+        noteId: "daily" as any,
         type: "daily",
-        message: "Daily reminder: check your scheduled posts and ideas",
+        message: "Daily reminder: check your scheduled notes and ideas",
         scheduledFor: Date.now(),
       });
     }
@@ -82,11 +82,11 @@ export const sendDailyReminders = internalAction({
   },
 });
 
-export const getOverduePosts = internalQuery({
+export const getOverdueNotes = internalQuery({
   args: { now: v.number() },
   returns: v.array(
     v.object({
-      _id: v.id("posts"),
+      _id: v.id("notes"),
       _creationTime: v.number(),
       title: v.string(),
       content: v.string(),
@@ -114,7 +114,7 @@ export const getOverduePosts = internalQuery({
   ),
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("posts")
+      .query("notes")
       .withIndex("by_scheduled_date")
       .filter((q) =>
         q.and(
@@ -154,11 +154,11 @@ export const getUsersWithNotificationsEnabled = internalQuery({
   },
 });
 
-export const getUserPostsForDailyReport = internalQuery({
+export const getUserNotesForDailyReport = internalQuery({
   args: { userId: v.id("users") },
   returns: v.array(
     v.object({
-      _id: v.id("posts"),
+      _id: v.id("notes"),
       title: v.string(),
       content: v.string(),
       platform: v.union(
@@ -177,7 +177,7 @@ export const getUserPostsForDailyReport = internalQuery({
     const oneDayFromNow = now + 24 * 60 * 60 * 1000;
 
     return await ctx.db
-      .query("posts")
+      .query("notes")
       .withIndex("by_user")
       .filter((q) =>
         q.and(

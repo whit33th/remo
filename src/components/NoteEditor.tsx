@@ -55,17 +55,17 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
     [],
   );
 
-  const createPost = useMutation(api.posts.createPost);
-  const updatePost = useMutation(api.posts.updatePost);
-  const deletePost = useMutation(api.posts.deletePost);
-  const publishPost = useAction(api.posts.publishPost);
-  const generateUploadUrl = useMutation(api.posts.generateUploadUrl);
+  const createPost = useMutation(api.notes.createNote);
+  const updatePost = useMutation(api.notes.updateNote);
+  const deletePost = useMutation(api.notes.deleteNote);
+  const publishPost = useAction(api.notes.publishNote);
+  const generateUploadUrl = useMutation(api.notes.generateUploadUrl);
 
-  const platformFields = useQuery(api.posts.getPlatformSpecificFields, {
+  const platformFields = useQuery(api.notes.getPlatformSpecificFields, {
     platform: formData.platform,
   });
   const existingNote = useQuery(
-    api.posts.getUserPosts,
+    api.notes.getUserNotes,
     noteId && noteId !== "new" ? {} : "skip",
   );
 
@@ -407,14 +407,14 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
         await createPost(postData);
         toast.success("Note created!");
       } else if (noteId) {
-        await updatePost({ id: noteId as Id<"posts">, ...postData });
+        await updatePost({ id: noteId as Id<"notes">, ...postData });
         toast.success("Note updated!");
       }
 
       onClose();
     } catch (error) {
-      console.error("Error saving post:", error);
-      toast.error("Error saving post");
+      console.error("Error saving note:", error);
+      toast.error("Error saving note");
     }
   };
 
@@ -430,7 +430,7 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
     }
 
     try {
-      await deletePost({ id: noteId as Id<"posts"> });
+      await deletePost({ id: noteId as Id<"notes"> });
       toast.success("Note deleted successfully!");
       onClose();
     } catch (error) {
@@ -467,9 +467,7 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
 
   return (
     <div className="min-h-screen bg-black text-neutral-300">
-      {/* Header */}
       <div className="sticky top-0 flex flex-col border-b border-neutral-900 bg-black/90 px-4 py-3 backdrop-blur-xl sm:grid sm:grid-cols-3 sm:items-center">
-        {/* Mobile: Top row with close button and title */}
         <div className="flex items-center justify-between sm:hidden">
           <button
             onClick={onClose}
@@ -480,10 +478,8 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           <h2 className="text-lg font-semibold">
             {noteId === "new" ? "New Note" : "Edit Note"}
           </h2>
-          <div className="w-6"></div> {/* Spacer for centering */}
         </div>
 
-        {/* Desktop: Left */}
         <div className="hidden items-center sm:flex">
           <button
             onClick={onClose}
@@ -493,16 +489,13 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </button>
         </div>
 
-        {/* Desktop: Center */}
         <div className="hidden justify-center sm:flex">
           <h2 className="text-lg font-semibold">
             {noteId === "new" ? "New Note" : "Edit Note"}
           </h2>
         </div>
 
-        {/* Mobile: Bottom row with buttons */}
         <div className="mt-3 flex items-center justify-end space-x-2 sm:mt-0">
-          {/* Notification Toggle - only show for Schedule status */}
           {formData.status === "schedule" && (
             <label className="relative inline-flex cursor-pointer items-center">
               <input
@@ -531,44 +524,18 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           >
             Save
           </button>
-          {/* {postId !== "new" && (
-            <>
-              <button
-                onClick={handlePublish}
-                disabled={publishing}
-                className={`flex h-10 items-center space-x-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors sm:space-x-2 sm:px-4 sm:text-base ${
-                  publishing
-                    ? "cursor-not-allowed bg-gray-500"
-                    : `bg-gradient-to-r ${platformColors[formData.platform]} text-white hover:opacity-80`
-                }`}
-              >
-                {publishing ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span className="hidden sm:inline">Publishing...</span>
-                    <span className="sm:hidden">...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    <span className="hidden sm:inline">Publish Now</span>
-                    <span className="sm:hidden">Publish</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex h-10 items-center space-x-1 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-800 sm:space-x-2 sm:px-3 sm:text-base"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </>
-          )} */}
+          {noteId !== "new" && (
+            <button
+              onClick={handleDelete}
+              className="flex h-10 items-center space-x-1 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-800 sm:space-x-2 sm:px-3 sm:text-base"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="mx-auto w-full max-w-[1000px] space-y-6 p-4">
-        {/* Platform Selection */}
         <div>
           <label className="mb-3 block text-sm font-medium">Platform</label>
           <div className="grid grid-cols-2 gap-3">
@@ -600,7 +567,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </div>
         </div>
 
-        {/* Status and Notifications */}
         <div className="space-y-4">
           <div>
             <label htmlFor="status" className="mb-2 block text-sm font-medium">
@@ -636,7 +602,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
             </div>
           </div>
 
-          {/* Scheduling Fields */}
           {formData.status === "schedule" && (
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -664,7 +629,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
             </div>
           )}
 
-          {/* Notification Settings */}
           {formData.status === "schedule" && formData.enableNotifications && (
             <div className="rounded-lg bg-neutral-950 p-4">
               <div>
@@ -690,7 +654,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
             </div>
           )}
         </div>
-        {/* Platform Info */}
         {platformFields && (
           <div className="rounded-lg bg-neutral-950 p-4">
             <div className="mb-3">
@@ -729,7 +692,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </div>
         )}
 
-        {/* Title */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             Title{" "}
@@ -747,7 +709,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           />
         </div>
 
-        {/* Content */}
         <div>
           <label className="mb-2 block text-sm font-medium">Content</label>
           <textarea
@@ -765,7 +726,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           )}
         </div>
 
-        {/* Media Upload */}
         {platformFields && (
           <div>
             <label className="mb-2 block text-sm font-medium">
@@ -888,10 +848,8 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </div>
         )}
 
-        {/* Platform Specific Fields */}
         {renderPlatformSpecificFields()}
 
-        {/* Hashtags */}
         <div>
           <label className="mb-2 block text-sm font-medium">Hashtags</label>
           <input
@@ -919,7 +877,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </div>
         </div>
 
-        {/* Links */}
         <div>
           <label className="mb-2 flex items-center space-x-2 text-sm font-medium">
             <Link className="h-4 w-4" />
@@ -950,7 +907,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </div>
         </div>
 
-        {/* Mentions */}
         <div>
           <label className="mb-2 flex items-center space-x-2 text-sm font-medium">
             <AtSign className="h-4 w-4" />
@@ -981,7 +937,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           </div>
         </div>
 
-        {/* Author Bio */}
         <div>
           <label className="mb-2 block text-sm font-medium">Author Bio</label>
           <textarea
