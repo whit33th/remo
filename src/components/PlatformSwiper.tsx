@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { PlatformIcon } from "./PlatformIcons";
 
 interface PlatformSwiperProps {
@@ -53,16 +54,20 @@ export function PlatformSwiper({
           key={platform.id || "all"}
           onClick={() => onPlatformSelect(platform.id)}
           className={`flex flex-shrink-0 flex-col items-center space-y-1 rounded-xl p-3 transition-all ${
-            selectedPlatform === platform.id ? "bg-neutral-950" : ""
+            selectedPlatform === platform.id
+              ? "scale-105 bg-neutral-950"
+              : "scale-100"
           }`}
         >
           <div
-            className={`h-16 w-16 rounded-full ${platform.color} flex items-center justify-center ${platform.textColor} shadow-lg`}
+            className={`h-16 w-16 rounded-full ${platform.color} relative flex items-center justify-center ${platform.textColor} shadow-lg`}
           >
             <PlatformIcon
               platform={platform.id === null ? "all" : platform.id}
               size={28}
-              className="text-current"
+              className={`text-current transition-transform ${
+                selectedPlatform === platform.id ? "scale-105" : "scale-100"
+              }`}
             />
           </div>
           <span className="text-xs font-medium text-neutral-300">
