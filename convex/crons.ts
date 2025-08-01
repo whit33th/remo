@@ -11,7 +11,9 @@ const crons = cronJobs();
 
 crons.interval(
   "check overdue notes",
-  { minutes: 60 },
+  {
+    hours: 24,
+  },
   internal.crons.checkOverdueNotes,
   {},
 );
