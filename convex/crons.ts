@@ -27,7 +27,7 @@ crons.cron(
 
 crons.interval(
   "Remove old emails from the resend component",
-  { hours: 1 },
+  { hours: 24 },
   internal.crons.cleanupResend,
 );
 
