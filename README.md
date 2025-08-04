@@ -1,10 +1,10 @@
-# Content Creator Assistant
+# Remo - Content Creator Assistant
 
 A powerful content management platform with advanced email notification system built for creators who manage content across multiple social media platforms.
 
 ## Live Demo
 
-**🌐 Try the app:** [WEB](https://tretch.vercel.app/)
+**🌐 Try the app:** [WEB](https://remo-nu.vercel.app)
 
 ## Email System - Core Feature
 
@@ -17,8 +17,8 @@ The platform uses **Resend Convex Component** to deliver intelligent email notif
 - **Deadline alerts** - reminders about upcoming posts
 - **Scheduled reminders** - automatic notifications for planned content
 - **Overdue content** - alerts for missed deadlines
-- **Published confirmations** - success notifications
-- **Daily reports** - content summary for the day
+- **Published confirmations** - success notifications with performance analytics
+- **Daily content schedules** - morning summary for the day
 
 **Email Features:**
 
@@ -66,14 +66,12 @@ Track email performance with webhook events:
 
 - Share posts via email
 - Team access to content
-- Collaborative reports
-- Content approval workflows
 
 ## Technical Stack
 
-**Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
+**Frontend:** Next.js, React, TypeScript, Tailwind CSS
 **Backend:** Convex (reactive database)
-**Email:** Resend with Convex integration
+**Email:** Resend with Convex Component
 **Auth:** Convex Auth
 
 ## Quick Start
@@ -81,7 +79,7 @@ Track email performance with webhook events:
 1. **Install dependencies:**
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. **Environment setup:**
@@ -94,16 +92,10 @@ AUTH_DOMAIN=your-domain.com
 RESEND_TOKEN=your-resend-token
 ```
 
-3. **DNS setup for email:**
-
-- Add domain to Resend Dashboard
-- Configure SPF and DKIM records
-- Wait for domain verification (5-30 minutes)
-
-4. **Run development:**
+3. **Run development:**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ## Email Configuration
@@ -116,16 +108,14 @@ npm run dev
 
 - Modern dark theme design
 - Gradient headers
-- Platform-specific styling
-- Personalized content blocks
-
-## Deployment
+- Platform-specific styling (YouTube, X, Instagram, Telegram)
+- Personalized content blocks with direct action links
 
 ## Hackathon Project
 
 Built for **Convex & Resend Hackathon** demonstrating:
 
 - Complete Resend Convex Component integration
-- Creative email functionality implementation
-- Quality full-stack application
-- Modern development practices
+- Creative email notification workflows
+- Quality full-stack application with multi-platform support
+- Modern development practices with Next.js and Convex
