@@ -19,9 +19,7 @@ type CreateNoteArgs = {
   links: string[];
   mentions: string[];
   mediaIds: Id<"_storage">[];
-  authorBio?: string;
   enableNotifications?: boolean;
-  notificationTime?: string;
   reminderHours?: number;
 };
 
@@ -41,9 +39,7 @@ export const createNote = mutation({
     links: v.array(v.string()),
     mentions: v.array(v.string()),
     mediaIds: v.array(v.id("_storage")),
-    authorBio: v.optional(v.string()),
     enableNotifications: v.optional(v.boolean()),
-    notificationTime: v.optional(v.string()),
     reminderHours: v.optional(v.number()),
   },
   returns: v.id("notes"),
@@ -60,7 +56,6 @@ export const createNote = mutation({
       createdAt: now,
       updatedAt: now,
       enableNotifications: args.enableNotifications || false,
-      notificationTime: args.notificationTime || "09:00",
       reminderHours: args.reminderHours || 24,
     });
 
@@ -76,7 +71,6 @@ export const createNote = mutation({
           noteId,
           scheduledDate: args.scheduledDate,
           reminderHours: args.reminderHours || 24,
-          notificationTime: args.notificationTime || "09:00",
         },
       );
     }
@@ -104,9 +98,7 @@ export const updateNote = mutation({
     links: v.optional(v.array(v.string())),
     mentions: v.optional(v.array(v.string())),
     mediaIds: v.optional(v.array(v.id("_storage"))),
-    authorBio: v.optional(v.string()),
     enableNotifications: v.optional(v.boolean()),
-    notificationTime: v.optional(v.string()),
     reminderHours: v.optional(v.number()),
   },
   returns: v.null(),
@@ -132,7 +124,6 @@ export const updateNote = mutation({
       updates.enableNotifications !== undefined ||
       updates.scheduledDate !== undefined ||
       updates.reminderHours !== undefined ||
-      updates.notificationTime !== undefined ||
       updates.status !== undefined
     ) {
       const updatedNote = await ctx.db.get(id);
@@ -148,7 +139,6 @@ export const updateNote = mutation({
             noteId: id,
             scheduledDate: updatedNote.scheduledDate,
             reminderHours: updatedNote.reminderHours || 24,
-            notificationTime: updatedNote.notificationTime || "09:00",
           },
         );
       }
@@ -317,7 +307,7 @@ export const getPlatformSpecificFields = query({
     const fields = {
       instagram: {
         required: ["content"],
-        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "mediaIds"],
         maxContentLength: 2200,
         maxHashtags: 30,
         mediaTypes: ["image", "video"],
@@ -325,7 +315,7 @@ export const getPlatformSpecificFields = query({
       },
       X: {
         required: ["content"],
-        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "mediaIds"],
         maxContentLength: 280,
         maxHashtags: 10,
         mediaTypes: ["image", "video"],
@@ -333,7 +323,7 @@ export const getPlatformSpecificFields = query({
       },
       youtube: {
         required: ["title", "content"],
-        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "mediaIds"],
         maxTitleLength: 100,
         maxContentLength: 5000,
         maxHashtags: 15,
@@ -342,7 +332,7 @@ export const getPlatformSpecificFields = query({
       },
       telegram: {
         required: ["content"],
-        optional: ["hashtags", "links", "mentions", "authorBio", "mediaIds"],
+        optional: ["hashtags", "links", "mentions", "mediaIds"],
         maxContentLength: 4096,
         maxHashtags: 20,
         mediaTypes: ["image", "video", "document"],
@@ -495,16 +485,13 @@ export const migrateNotifications = mutation({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    // Get all notifications
     const notifications = await ctx.db.query("notifications").collect();
 
     let migratedCount = 0;
 
     for (const notification of notifications) {
-      // Check if this notification has postId field (old format) but no noteId
       if ((notification as any).postId && !(notification as any).noteId) {
         try {
-          // Create a new notification with the correct schema
           const newNotification = {
             userId: notification.userId,
             noteId: (notification as any).postId,
@@ -514,10 +501,8 @@ export const migrateNotifications = mutation({
             scheduledFor: notification.scheduledFor,
           };
 
-          // Insert the new notification
           await ctx.db.insert("notifications", newNotification);
 
-          // Delete the old notification
           await ctx.db.delete(notification._id);
 
           migratedCount++;
@@ -539,17 +524,13 @@ export const cleanupOldNotificationFields = mutation({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    // Get all notifications that still have postId field
     const notifications = await ctx.db.query("notifications").collect();
 
     let cleanedCount = 0;
 
     for (const notification of notifications) {
-      // Check if this notification still has postId field
       if ((notification as any).postId) {
         try {
-          // Since we can't remove fields in Convex, we'll just count them
-          // The migration function should have already handled the conversion
           console.log(
             `Found notification with old postId field: ${notification._id}`,
           );

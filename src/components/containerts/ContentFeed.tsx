@@ -1,14 +1,9 @@
 "use client";
 
 import { Edit } from "lucide-react";
-import { GRID_LAYOUTS } from "../constants";
-import { ContentFeedProps } from "../types";
-import {
-  InstagramCard,
-  TelegramCard,
-  XCard,
-  YouTubeCard,
-} from "./containerts/Cards";
+import { GRID_LAYOUTS } from "../../constants";
+import { ContentFeedProps } from "../../types";
+import { InstagramCard, TelegramCard, XCard, YouTubeCard } from "./Cards";
 import { NoteCard } from "./NoteCard";
 
 export function ContentFeed({ platform, notes, onEditNote }: ContentFeedProps) {
@@ -80,7 +75,7 @@ export function ContentFeed({ platform, notes, onEditNote }: ContentFeedProps) {
 
   return (
     <section className="w-full">
-      {/* Notes Feed */}
+      {}
       <div className="space-y-0 overflow-hidden">
         {sortedNotes.length === 0 ? (
           <div className="py-16 text-center">

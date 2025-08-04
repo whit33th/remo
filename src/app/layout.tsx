@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import "../globals.css";
+import "./globals.css";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import { AppLayout } from "./AppLayout";
 

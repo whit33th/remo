@@ -6,10 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@/convex/_generated/api";
-import { PLATFORM_COLORS, STATUS_CONFIG } from "../constants";
-import { NoteCardProps } from "../types";
-import { PlatformIcon } from "./PlatformIcons";
-import { ShareModal } from "./ShareModal";
+import { PLATFORM_COLORS, STATUS_CONFIG } from "../../constants";
+import { NoteCardProps } from "../../types";
+import { PlatformIcon } from "../PlatformIcons";
+import { ShareModal } from "../ui/ShareModal";
 
 export function NoteCard({ note, onEdit }: NoteCardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);

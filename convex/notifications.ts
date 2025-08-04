@@ -62,7 +62,6 @@ export const scheduleNoteNotifications = internalAction({
     noteId: v.id("notes"),
     scheduledDate: v.number(),
     reminderHours: v.number(),
-    notificationTime: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -148,7 +147,6 @@ export const scheduleNoteNotifications = internalAction({
       internal.notifications.scheduleDailyReminders,
       {
         userId: note.userId,
-        notificationTime: args.notificationTime,
       },
     );
 
@@ -159,7 +157,6 @@ export const scheduleNoteNotifications = internalAction({
 export const scheduleDailyReminders = internalAction({
   args: {
     userId: v.id("users"),
-    notificationTime: v.string(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -171,6 +168,10 @@ export const scheduleDailyReminders = internalAction({
       return null;
     }
 
+    if (!user.notificationsEnabled) {
+      return null;
+    }
+
     const notes = await ctx.runQuery(internal.shared.getUserNotesForReminders, {
       userId: args.userId,
     });
@@ -179,34 +180,21 @@ export const scheduleDailyReminders = internalAction({
       return null;
     }
 
-    const now = new Date();
-    const [hours, minutes] = args.notificationTime.split(":").map(Number);
-    const nextReminder = new Date();
-    nextReminder.setHours(hours, minutes, 0, 0);
-
-    if (nextReminder <= now) {
-      nextReminder.setDate(nextReminder.getDate() + 1);
-    }
-
     const dailyNotificationId = await ctx.runMutation(
       internal.notifications.createInternalNotification,
       {
         userId: args.userId,
         noteId: notes[0]._id,
         type: "daily",
-        message: `📋 Daily report: You have ${notes.length} active notes in progress`,
-        scheduledFor: nextReminder.getTime(),
+        message: `Daily report: You have ${notes.length} active notes in progress`,
+        scheduledFor: Date.now(),
       },
     );
 
-    await ctx.scheduler.runAt(
-      nextReminder.getTime(),
-      internal.sendEmails.sendDailyReminder,
-      {
-        notificationId: dailyNotificationId,
-        userId: args.userId,
-      },
-    );
+    await ctx.scheduler.runAfter(0, internal.sendEmails.sendDailyReminder, {
+      userId: args.userId,
+      notificationId: dailyNotificationId,
+    });
 
     return null;
   },
@@ -215,7 +203,7 @@ export const scheduleDailyReminders = internalAction({
 export const createInternalNotification = internalMutation({
   args: {
     userId: v.id("users"),
-    noteId: v.id("notes"),
+    noteId: v.optional(v.id("notes")),
     type: v.union(
       v.literal("deadline"),
       v.literal("reminder"),

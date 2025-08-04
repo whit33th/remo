@@ -2,6 +2,7 @@
 
 import { ViewType } from "@/types";
 import { Calendar, Home, Plus, User } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 interface BottomNavigationProps {
   currentView: ViewType;
@@ -34,8 +35,13 @@ export function BottomNavigation({
       label: "Profile",
     },
   ];
+  const pathname = usePathname();
+  const router = useRouter();
 
   const handleNavClick = (id: ViewType) => {
+    if (pathname !== "/") {
+      router.push("/");
+    }
     onViewChange(id);
   };
 

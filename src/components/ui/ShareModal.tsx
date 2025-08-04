@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { Toast } from "./Toast";
+import { Toast } from "../Toast";
 import { Note } from "@/types";
 
 interface ShareModalProps {

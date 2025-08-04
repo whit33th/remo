@@ -65,7 +65,7 @@ export const PLATFORM_FIELDS = {
 
 export const GRID_LAYOUTS = {
   instagram: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
-  youtube: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6",
+  youtube: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ",
   X: "space-y-4 px-4",
   telegram: "space-y-3 mx-auto px-4",
 } as const;

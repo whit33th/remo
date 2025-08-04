@@ -1,16 +1,16 @@
 "use client";
 
 import { Authenticated, Unauthenticated } from "convex/react";
-import { BottomNavigation } from "@/components/BottomNavigation";
-import { Calendar } from "@/components/Calendar";
-import { Header } from "@/components/Header";
-import { MainFeed } from "@/components/MainFeed";
-import { NoteEditor } from "@/components/NoteEditor";
-import { Profile } from "@/components/Profile";
-import { SignInForm } from "@/components/SignInForm";
+import { BottomNavigation } from "@/components/containerts/BottomNavigation";
+import { Calendar } from "@/components/containerts/Calendar";
+import { Header } from "@/components/containerts/Header";
+import { MainFeed } from "@/components/containerts/MainFeed";
+import { NoteEditor } from "@/components/containerts/NoteEditor";
+import { Profile } from "@/components/containerts/Profile";
+import { SignInForm } from "@/components/containerts/SignInForm";
 import { api } from "@/convex/_generated/api";
 import { Platform, ViewType } from "@/types";
-import { useQuery } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 

@@ -1,23 +1,22 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
+import { useQuery } from "convex-helpers/react/cache";
 import { api } from "@/convex/_generated/api";
 import { useState, useEffect } from "react";
-import { Button } from "@/ui/Button";
-import { Clock, Bell, BellOff, Settings, User } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Bell, BellOff, Settings, User } from "lucide-react";
 import { toast } from "sonner";
 
 export function Profile() {
   const user = useQuery(api.auth.loggedInUser);
   const updateUserSettings = useMutation(api.auth.updateUserSettings);
 
-  const [notificationTime, setNotificationTime] = useState("09:00");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setNotificationTime(user.notificationTime || "09:00");
       setNotificationsEnabled(user.notificationsEnabled !== false);
     }
   }, [user]);
@@ -28,7 +27,6 @@ export function Profile() {
     setIsLoading(true);
     try {
       await updateUserSettings({
-        notificationTime,
         notificationsEnabled,
       });
       toast.success("Settings saved!");
@@ -77,7 +75,7 @@ export function Profile() {
             <h2 className="text-lg font-medium">Notification Settings</h2>
           </div>
 
-          <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center">
               {notificationsEnabled ? (
                 <Bell className="mr-2 h-5 w-5 text-neutral-400" />
@@ -99,24 +97,6 @@ export function Profile() {
               />
             </button>
           </div>
-
-          {notificationsEnabled && (
-            <div className="space-y-3">
-              <div className="flex items-center">
-                <Clock className="mr-2 h-5 w-5 text-neutral-400" />
-                <span className="text-sm">Notification time</span>
-              </div>
-              <input
-                type="time"
-                value={notificationTime}
-                onChange={(e) => setNotificationTime(e.target.value)}
-                className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white focus:border-blue-600 focus:outline-none"
-              />
-              <p className="text-xs text-neutral-500">
-                You will receive a daily reminder at the specified time
-              </p>
-            </div>
-          )}
         </div>
 
         <Button

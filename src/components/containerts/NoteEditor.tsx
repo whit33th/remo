@@ -20,7 +20,7 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PlatformIcon } from "./PlatformIcons";
+import { PlatformIcon } from "../PlatformIcons";
 
 interface NoteEditorProps {
   noteId: string | null;
@@ -41,9 +41,7 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
     linkInput: "",
     mentions: [] as string[],
     mentionInput: "",
-    authorBio: "",
     enableNotifications: false,
-    notificationTime: "09:00",
     reminderHours: 24,
   });
 
@@ -101,9 +99,7 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
           linkInput: "",
           mentions: note.mentions,
           mentionInput: "",
-          authorBio: note.authorBio || "",
           enableNotifications: note.enableNotifications || false,
-          notificationTime: note.notificationTime || "09:00",
           reminderHours: note.reminderHours || 24,
         });
 
@@ -395,9 +391,7 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
         links: formData.links,
         mentions: formData.mentions,
         mediaIds: allMediaIds,
-        authorBio: formData.authorBio || undefined,
         enableNotifications: formData.enableNotifications,
-        notificationTime: formData.notificationTime,
         reminderHours: formData.reminderHours,
       };
 
@@ -933,17 +927,6 @@ export function NoteEditor({ noteId, onClose }: NoteEditorProps) {
               </div>
             ))}
           </div>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium">Author Bio</label>
-          <textarea
-            value={formData.authorBio}
-            onChange={(e) => handleInputChange("authorBio", e.target.value)}
-            rows={2}
-            className="w-full resize-none rounded-lg border border-gray-300 bg-neutral-300 px-3 py-3 text-black focus:border-transparent focus:ring-2 focus:ring-blue-500"
-            placeholder="Your bio or signature..."
-          />
         </div>
       </div>
     </div>

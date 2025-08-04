@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { NoteEditor } from "@/components/NoteEditor";
+import { NoteEditor } from "@/components/containerts/NoteEditor";
 
 export default function EditNotePage() {
   const params = useParams();

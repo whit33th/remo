@@ -4,7 +4,7 @@ import {
   XIcon as UIXIcon,
   YouTubeIcon as UIYouTubeIcon,
   TelegramIcon as UITelegramIcon,
-} from "../ui/SocialIcons";
+} from "./ui/SocialIcons";
 
 interface IconProps {
   className?: string;

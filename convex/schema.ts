@@ -6,7 +6,6 @@ const applicationTables = {
   users: defineTable({
     email: v.string(),
     name: v.optional(v.string()),
-    notificationTime: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
   }).index("by_email", ["email"]),
   notes: defineTable({
@@ -25,12 +24,10 @@ const applicationTables = {
     links: v.array(v.string()),
     mentions: v.array(v.string()),
     mediaIds: v.array(v.id("_storage")),
-    authorBio: v.optional(v.string()),
     userId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
     enableNotifications: v.optional(v.boolean()),
-    notificationTime: v.optional(v.string()),
     reminderHours: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
@@ -40,7 +37,7 @@ const applicationTables = {
 
   notifications: defineTable({
     userId: v.id("users"),
-    noteId: v.id("notes"),
+    noteId: v.optional(v.id("notes")),
     type: v.union(
       v.literal("deadline"),
       v.literal("reminder"),

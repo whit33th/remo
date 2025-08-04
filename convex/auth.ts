@@ -21,7 +21,6 @@ export const loggedInUser = query({
       emailVerificationTime: v.optional(v.number()),
       phoneVerificationTime: v.optional(v.number()),
       isAnonymous: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
       notificationsEnabled: v.optional(v.boolean()),
     }),
     v.null(),
@@ -41,7 +40,6 @@ export const loggedInUser = query({
 
 export const updateUserSettings = mutation({
   args: {
-    notificationTime: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -56,7 +54,6 @@ export const updateUserSettings = mutation({
     }
 
     await ctx.db.patch(userId, {
-      notificationTime: args.notificationTime,
       notificationsEnabled: args.notificationsEnabled,
     });
   },

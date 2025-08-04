@@ -4,8 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CardProps } from "./types";
-import { SocialIcon } from "../../../ui/SocialIcons";
-import { ShareModal } from "../../ShareModal";
+import { SocialIcon } from "../../ui/SocialIcons";
+import { ShareModal } from "../../ui/ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Edit } from "lucide-react";
@@ -43,9 +43,6 @@ export function YouTubeCard({ note, onEdit }: CardProps) {
                   fill
                   className="object-cover"
                 />
-              </div>
-              <div className="absolute bottom-2 right-2 rounded bg-black bg-opacity-80 px-2 py-1 text-xs text-white">
-                10:30
               </div>
             </div>
           )}

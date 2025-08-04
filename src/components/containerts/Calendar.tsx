@@ -2,7 +2,7 @@
 
 import { Calendar as CalendarIcon, Lightbulb } from "lucide-react";
 import { useState } from "react";
-import { PlatformIcon } from "./PlatformIcons";
+import { PlatformIcon } from "../PlatformIcons";
 import { PlatformSwiper } from "./PlatformSwiper";
 import { Note, Platform } from "@/types";
 

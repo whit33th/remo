@@ -1,7 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { PlatformIcon } from "./PlatformIcons";
+import { PlatformIcon } from "../PlatformIcons";
 
 interface PlatformSwiperProps {
   selectedPlatform: "instagram" | "X" | "youtube" | "telegram" | null;

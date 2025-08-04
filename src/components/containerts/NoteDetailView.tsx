@@ -15,14 +15,13 @@ import {
   FileText,
   Link,
   Share2,
-  User,
   X,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SocialIcon } from "../ui/SocialIcons";
-import { ShareModal } from "./ShareModal";
+import { ShareModal } from "../ui/ShareModal";
 
 interface NoteDetailViewProps {
   note: NoteWithMediaUrls;
@@ -132,7 +131,7 @@ export function NoteDetailView({ note, onBack }: NoteDetailViewProps) {
         </div>
 
         {note.mediaUrls && note.mediaUrls.length > 0 && (
-          <div className="mb-4 grid grid-cols-2 gap-2">
+          <div className="mb-4 grid grid-cols-[repeat(auto-fit,_minmax(200px,_1fr))] gap-2">
             {note.mediaUrls
               .filter((url): url is string => url !== null)
               .map((url, index) => (
@@ -273,25 +272,12 @@ export function NoteDetailView({ note, onBack }: NoteDetailViewProps) {
 
         {(note.hashtags?.length > 0 ||
           note.links?.length > 0 ||
-          note.mentions?.length > 0 ||
-          note.authorBio) && (
+          note.mentions?.length > 0) && (
           <div className="rounded-lg border border-neutral-800 p-6">
             <h3 className="mb-4 text-lg font-semibold text-neutral-100">
               Additional Information
             </h3>
             <div className="space-y-4">
-              {note.authorBio && (
-                <div>
-                  <div className="mb-2 flex items-center space-x-2">
-                    <User className="h-4 w-4 text-neutral-400" />
-                    <span className="text-sm font-medium text-neutral-400">
-                      Author Bio
-                    </span>
-                  </div>
-                  <p className="text-sm text-neutral-200">{note.authorBio}</p>
-                </div>
-              )}
-
               {note.links && note.links.length > 0 && (
                 <div>
                   <div className="mb-2 flex items-center space-x-2">

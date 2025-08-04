@@ -18,11 +18,10 @@ crons.interval(
   {},
 );
 
-crons.cron(
+crons.daily(
   "daily reminders",
-  "0 9 * * *",
+  { hourUTC: 7, minuteUTC: 0 },
   internal.crons.sendDailyReminders,
-  {},
 );
 
 crons.interval(
@@ -47,7 +46,7 @@ export const checkOverdueNotes = internalAction({
           userId: note.userId,
           noteId: note._id,
           type: "overdue",
-          message: `🚨 Note "${note.title}" is overdue! Scheduled publication date: ${new Date(note.scheduledDate!).toLocaleDateString("en-US")}`,
+          message: `Note "${note.title}" is overdue! Scheduled publication date: ${new Date(note.scheduledDate!).toLocaleDateString("en-US")}`,
           scheduledFor: now,
         },
       );
@@ -70,14 +69,20 @@ export const sendDailyReminders = internalAction({
     );
 
     for (const user of usersWithNotifications) {
-      const notificationTime = user.notificationTime || "09:00";
+      const notificationId = await ctx.runMutation(
+        internal.notifications.createInternalNotification,
+        {
+          userId: user._id,
+          noteId: undefined,
+          type: "daily",
+          message: "Daily reminder: check your scheduled notes and ideas",
+          scheduledFor: Date.now(),
+        },
+      );
 
-      await ctx.runMutation(internal.notifications.createInternalNotification, {
+      await ctx.runAction(internal.sendEmails.sendDailyReminder, {
+        notificationId,
         userId: user._id,
-        noteId: "daily" as any,
-        type: "daily",
-        message: "Daily reminder: check your scheduled notes and ideas",
-        scheduledFor: Date.now(),
       });
     }
     return null;
@@ -105,12 +110,10 @@ export const getOverdueNotes = internalQuery({
       links: v.array(v.string()),
       mentions: v.array(v.string()),
       mediaIds: v.array(v.id("_storage")),
-      authorBio: v.optional(v.string()),
       userId: v.id("users"),
       createdAt: v.number(),
       updatedAt: v.number(),
       enableNotifications: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
       reminderHours: v.optional(v.number()),
     }),
   ),
@@ -142,7 +145,6 @@ export const getUsersWithNotificationsEnabled = internalQuery({
       emailVerificationTime: v.optional(v.number()),
       phoneVerificationTime: v.optional(v.number()),
       isAnonymous: v.optional(v.boolean()),
-      notificationTime: v.optional(v.string()),
       notificationsEnabled: v.optional(v.boolean()),
     }),
   ),

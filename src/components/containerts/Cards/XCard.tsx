@@ -4,8 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CardProps } from "./types";
-import { SocialIcon } from "../../../ui/SocialIcons";
-import { ShareModal } from "../../ShareModal";
+import { SocialIcon } from "../../ui/SocialIcons";
+import { ShareModal } from "../../ui/ShareModal";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Edit } from "lucide-react";
@@ -43,8 +43,8 @@ export function XCard({ note, onEdit }: CardProps) {
                 <span className="font-semibold text-neutral-100">
                   {note.title}
                 </span>
-                <span className="text-sm text-gray-600">
-                  {note.mentions?.map((p, index) => (
+                <span className="space-x-1 text-sm text-gray-600">
+                  {note.mentions?.slice(0, 5).map((p, index) => (
                     <span key={index}>@{p}</span>
                   ))}
                 </span>

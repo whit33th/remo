@@ -45,15 +45,20 @@ export const sendNotificationEmail = internalAction({
       return null;
     }
 
-    const note = await ctx.runQuery(internal.notes.getNoteById, {
-      id: notification.noteId,
-    });
-
+    // Skip note lookup if noteId is undefined (for daily reminders)
+    let note;
     let mediaUrls: string[] = [];
-    if (note && note.mediaIds.length > 0) {
-      mediaUrls = await ctx.runQuery(internal.notes.getMediaUrls, {
-        mediaIds: note.mediaIds,
+
+    if (notification.noteId) {
+      note = await ctx.runQuery(internal.notes.getNoteById, {
+        id: notification.noteId,
       });
+
+      if (note && note.mediaIds.length > 0) {
+        mediaUrls = await ctx.runQuery(internal.notes.getMediaUrls, {
+          mediaIds: note.mediaIds,
+        });
+      }
     }
 
     try {
@@ -99,7 +104,7 @@ export const sendDailyReminder = internalAction({
       await resend.sendEmail(ctx, {
         from: "Content Creator Assistant <notifications@resend.dev>",
         to: user.email,
-        subject: "📋 Daily Content Report",
+        subject: "Daily Content Report",
         html: getDailyReminderContent(notes),
       });
 
@@ -184,28 +189,28 @@ function getStatusInfo(status: string) {
     return {
       text: "Idea",
       color: "bg-yellow-100 text-yellow-800",
-      icon: "💡",
+      icon: "",
     };
   }
   return {
     text: "Schedule",
     color: "bg-green-100 text-green-800",
-    icon: "📅",
+    icon: "",
   };
 }
 
 function getEmailSubject(type: string): string {
   switch (type) {
     case "deadline":
-      return "📅 Deadline approaching";
+      return "Deadline approaching";
     case "reminder":
-      return "⏰ Content publication reminder";
+      return "Content publication reminder";
     case "overdue":
-      return "🚨 Overdue content";
+      return "Overdue content";
     case "published":
-      return "🎉 Content published!";
+      return "Content published!";
     case "daily":
-      return "📋 Daily content report";
+      return "Daily content report";
     default:
       return "Content Creator Notification";
   }
@@ -247,12 +252,8 @@ function getEmailContent(
         <!-- Header -->
         <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px;">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, ${platformColor}); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-              ${getPlatformName(note.platform).charAt(0)}
-            </div>
-            <div>
+            
               <div style="font-weight: 600; color: #ffffff; font-size: 16px;">${note.title || "No title"}</div>
-            </div>
           </div>
         </div>
 
@@ -325,7 +326,7 @@ function getEmailContent(
           }
 
           <!-- Footer -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; gap: 8px;">
             ${
               note.scheduledDate
                 ? `
@@ -360,7 +361,7 @@ function getDailyReminderContent(notes: any[]): string {
   const baseStyle = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background-color: #000000; color: #ffffff;">
       <div style="background-color: #000000; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 20px; border: 1px solid #333;">
-        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">📋 Daily Report</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Daily Report</h1>
         <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Your content plan for today</p>
       </div>
   `;
@@ -368,7 +369,7 @@ function getDailyReminderContent(notes: any[]): string {
   const footerStyle = `
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; text-align: center;">
         <p style="color: #999; font-size: 14px; margin: 0;">
-          Have a great day and productive work! 🚀
+          Have a great day and productive work!
         </p>
       </div>
     </div>
@@ -383,11 +384,11 @@ function getDailyReminderContent(notes: any[]): string {
       
       <div style="display: grid; gap: 12px; margin-bottom: 24px;">
         <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 4px solid #4caf50;">
-          <h4 style="margin: 0 0 4px 0; color: #4caf50; font-size: 14px; font-weight: 600;">⏰ Scheduled: ${scheduledNotes.length}</h4>
+          <h4 style="margin: 0 0 4px 0; color: #4caf50; font-size: 14px; font-weight: 600;">Scheduled: ${scheduledNotes.length}</h4>
         </div>
 
         <div style="background: #1a1a1a; padding: 12px; border-radius: 8px; border-left: 4px solid #9c27b0;">
-          <h4 style="margin: 0 0 4px 0; color: #9c27b0; font-size: 14px; font-weight: 600;">💡 Ideas: ${ideaNotes.length}</h4>
+          <h4 style="margin: 0 0 4px 0; color: #9c27b0; font-size: 14px; font-weight: 600;">Ideas: ${ideaNotes.length}</h4>
         </div>
       </div>
   `;
@@ -415,12 +416,8 @@ function getDailyReminderContent(notes: any[]): string {
             <!-- Header -->
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px;">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, ${platformColor}); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">
-                  ${getPlatformName(note.platform).charAt(0)}
-                </div>
-                <div>
+                
                   <div style="font-weight: 600; color: #ffffff; font-size: 14px;">${note.title || "No title"}</div>
-                </div>
               </div>
             </div>
 
@@ -445,7 +442,7 @@ function getDailyReminderContent(notes: any[]): string {
               <!-- Footer -->
               <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 6px;">
                 <span style="font-size: 11px; color: #999999;">
-                  🕐 ${new Date(note.scheduledDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                   ${new Date(note.scheduledDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                 </span>
                 <div style="display: flex; align-items: center; gap: 3px; color: #cccccc;">
                   <span style="font-size: 11px;">${getPlatformName(note.platform)}</span>
@@ -496,7 +493,6 @@ export function createShareEmailContent(
   let content = "";
 
   if (noteData) {
-    const platformColor = getPlatformColor(noteData.platform);
     const statusInfo = getStatusInfo(noteData.status);
 
     content = `
@@ -628,7 +624,7 @@ export function createShareEmailContent(
           }
 
           <!-- Footer -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; gap: 8px;">
             ${
               noteData.scheduledDate
                 ? `
