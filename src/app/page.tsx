@@ -3,7 +3,7 @@
 import { Authenticated, Unauthenticated } from "convex/react";
 import { BottomNavigation } from "@/components/containerts/BottomNavigation";
 import { Calendar } from "@/components/containerts/Calendar";
-import { Header } from "@/components/containerts/Header";
+import { Header, Logo } from "@/components/containerts/Header";
 import { MainFeed } from "@/components/containerts/MainFeed";
 import { NoteEditor } from "@/components/containerts/NoteEditor";
 import { Profile } from "@/components/containerts/Profile";
@@ -93,7 +93,7 @@ function AppLayout({ children }: AppLayoutProps) {
       <Unauthenticated>
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-neutral-900 bg-black/80 px-4 text-neutral-300 shadow-sm backdrop-blur-sm">
-            <h2 className="text-xl">Tretch</h2>
+            {Logo}
           </header>
           <main className="flex flex-1 items-center justify-center p-8">
             <div className="mx-auto w-full max-w-md">

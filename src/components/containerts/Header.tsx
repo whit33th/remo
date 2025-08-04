@@ -10,7 +10,7 @@ interface User {
 interface HeaderProps {
   user: User;
 }
-const Logo = (
+export const Logo = (
   <svg
     width="52"
     height="52"
