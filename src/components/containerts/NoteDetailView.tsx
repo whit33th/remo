@@ -124,7 +124,7 @@ export function NoteDetailView({ note, onBack }: NoteDetailViewProps) {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-neutral-100">
-              {getPlatformDisplayName(note.platform)}
+              {note.title || getPlatformDisplayName(note.platform)}
             </h3>
             <p className="text-sm text-neutral-400">@{note.platform}</p>
           </div>
