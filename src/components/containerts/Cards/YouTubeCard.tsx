@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { api } from "@/convex/_generated/api";
+import { useAction } from "convex/react";
+import { Edit, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { CardProps } from "./types";
-import { SocialIcon } from "../../ui/SocialIcons";
+import { useState } from "react";
 import { ShareModal } from "../../ui/ShareModal";
-import { useAction } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Edit } from "lucide-react";
+import { SocialIcon } from "../../ui/SocialIcons";
+import { CardProps } from "./types";
 
 export function YouTubeCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -66,9 +66,7 @@ export function YouTubeCard({ note, onEdit }: CardProps) {
               }}
               className="z-10 ml-2 flex-shrink-0 text-gray-400 transition-colors hover:text-gray-600"
             >
-              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
+              <Edit className="h-4 w-4" />
             </button>
           </div>
           {note.content && (
@@ -91,7 +89,7 @@ export function YouTubeCard({ note, onEdit }: CardProps) {
               }}
               className="z-10 text-gray-400 transition-colors hover:text-gray-600"
             >
-              <Edit className="h-4 w-4" />
+              <Share2 className="h-4 w-4" />
             </button>
           </div>
         </div>

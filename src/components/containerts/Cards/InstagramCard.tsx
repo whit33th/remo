@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { api } from "@/convex/_generated/api";
+import { useAction } from "convex/react";
+import { Edit, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { CardProps } from "./types";
-import { SocialIcon } from "../../ui/SocialIcons";
+import { useState } from "react";
 import { ShareModal } from "../../ui/ShareModal";
-import { useAction } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Edit } from "lucide-react";
+import { SocialIcon } from "../../ui/SocialIcons";
+import { CardProps } from "./types";
 
 export function InstagramCard({ note, onEdit }: CardProps) {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -31,7 +31,7 @@ export function InstagramCard({ note, onEdit }: CardProps) {
       <Link
         href={`/note/${note._id}`}
         prefetch={true}
-        className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border border-neutral-950/20 bg-black transition-transform"
+        className="rounded- group flex h-full cursor-pointer flex-col overflow-hidden border border-neutral-950/20 bg-black transition-transform"
       >
         {note.mediaUrls &&
           note.mediaUrls.filter((url) => url !== null).length > 0 && (
@@ -99,7 +99,7 @@ export function InstagramCard({ note, onEdit }: CardProps) {
                 }}
                 className="z-10 text-gray-400 transition-colors hover:text-gray-600"
               >
-                <Edit className="h-4 w-4" />
+                <Share2 className="h-4 w-4" />
               </button>
             </div>
           </div>
