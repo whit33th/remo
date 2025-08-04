@@ -11,7 +11,7 @@ const robotoSans = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tretch - Content Creator Platform",
+  title: "Remo - Content Planning",
   description: "Plan and manage your content across all platforms",
 };
 
