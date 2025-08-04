@@ -31,7 +31,7 @@ export function YouTubeCard({ note, onEdit }: CardProps) {
       <Link
         href={`/note/${note._id}`}
         prefetch={true}
-        className="cursor-pointer overflow-hidden rounded-lg bg-black transition-transform hover:scale-[1.02]"
+        className="cursor-pointer overflow-hidden bg-black transition-transform hover:scale-[1.02]"
       >
         {note.mediaUrls &&
           note.mediaUrls.filter((url) => url !== null).length > 0 && (
